@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 from typing import Dict
 from utils.response import StandardResponse
+from utils.error_codes import SuccessCode
 from controllers.comment_controller import comment_controller
 
 router = APIRouter(prefix="/v1/posts", tags=["댓글"])
@@ -13,7 +14,7 @@ async def get_comments(post_id: str):
     - 게시글이 존재하지 않으면 404 에러
     """
     data = comment_controller.get_comments_by_post(post_id)
-    return StandardResponse.success("COMMENTS_RETRIEVED", data)
+    return StandardResponse.success(SuccessCode.COMMENTS_RETRIEVED, data)
 
 @router.post("/{post_id}/comments", response_model=None, status_code=status.HTTP_201_CREATED)
 async def create_comment(post_id: str, req: Dict):
@@ -24,7 +25,7 @@ async def create_comment(post_id: str, req: Dict):
     - 게시글이 존재하지 않으면 404 에러
     """
     data = comment_controller.create_comment(post_id, req)
-    return StandardResponse.success("COMMENT_CREATED", {"comment_id": data["comment_id"]}, 201)
+    return StandardResponse.success(SuccessCode.COMMENT_CREATED, {"comment_id": data["comment_id"]}, 201)
 
 @router.patch("/{post_id}/comments/{comment_id}", response_model=None, status_code=status.HTTP_200_OK)
 async def update_comment(post_id: str, comment_id: str, req: Dict):
@@ -35,7 +36,7 @@ async def update_comment(post_id: str, comment_id: str, req: Dict):
     - 게시글이나 댓글이 존재하지 않으면 404 에러
     """
     data = comment_controller.update_comment(post_id, comment_id, req)
-    return StandardResponse.success("COMMENT_UPDATED", None)
+    return StandardResponse.success(SuccessCode.COMMENT_UPDATED, None)
 
 @router.delete("/{post_id}/comments/{comment_id}", response_model=None, status_code=status.HTTP_200_OK)
 async def delete_comment(post_id: str, comment_id: str):
@@ -46,6 +47,6 @@ async def delete_comment(post_id: str, comment_id: str):
     """
     deleted_comment = comment_controller.delete_comment(post_id, comment_id)
     return StandardResponse.success(
-        "COMMENT_DELETED",
+        SuccessCode.COMMENT_DELETED,
         {"comment_id": deleted_comment["comment_id"], "message": "댓글이 삭제되었습니다"}
     )

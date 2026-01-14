@@ -3,7 +3,7 @@ from datetime import datetime
 import uuid
 
 
-class BoardModel:
+class PostModel:
     """게시글 데이터 관리 Model"""
 
     def __init__(self):
@@ -49,8 +49,15 @@ class BoardModel:
         return posts_list[start_idx:end_idx]
 
     def get_post_by_id(self, post_id: str) -> Optional[Dict]:
-        """ID로 게시글 조회"""
+        """게시글 ID로 조회"""
         return self.posts_db.get(post_id)
+
+    def increment_view_count(self, post_id: str) -> bool:
+        """조회수 증가"""
+        if post_id in self.posts_db:
+            self.posts_db[post_id]["view_count"] += 1
+            return True
+        return False
 
     def update_post(self, post_id: str, title: str, content: str) -> Optional[Dict]:
         """게시글 수정"""
@@ -71,33 +78,22 @@ class BoardModel:
             return True
         return False
 
-    def increment_view_count(self, post_id: str) -> bool:
-        """조회수 증가"""
-        if post_id in self.posts_db:
-            self.posts_db[post_id]["view_count"] += 1
-            return True
-        return False
-
-    def get_posts_by_author(self, author_id: str) -> List[Dict]:
-        """특정 작성자의 게시글 조회"""
-        return [
-            post for post in self.posts_db.values()
-            if post["author_id"] == author_id
-        ]
-
     def get_total_posts_count(self) -> int:
         """전체 게시글 수 조회"""
         return len(self.posts_db)
 
+    def get_posts_by_author(self, author_id: str) -> List[Dict]:
+        """특정 작성자의 게시글 조회"""
+        return [post for post in self.posts_db.values() if post["author_id"] == author_id]
+
     def search_posts(self, keyword: str) -> List[Dict]:
-        """게시글 검색 (제목과 내용에서 키워드 검색)"""
-        results = []
-        for post in self.posts_db.values():
-            if (keyword.lower() in post["title"].lower() or
-                keyword.lower() in post["content"].lower()):
-                results.append(post.copy())
-        return results
+        """게시글 검색 (제목+내용)"""
+        keyword_lower = keyword.lower()
+        return [
+            post for post in self.posts_db.values()
+            if keyword_lower in post["title"].lower() or keyword_lower in post["content"].lower()
+        ]
 
 
 # Model 인스턴스 생성
-board_model = BoardModel()
+post_model = PostModel()

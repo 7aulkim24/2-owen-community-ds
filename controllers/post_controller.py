@@ -1,10 +1,12 @@
 from typing import List, Dict
 from datetime import datetime
-from models import board_model
-from utils.exceptions import NotFoundError, ForbiddenError
+from models import post_model
+from utils.exceptions import PostNotFoundError, ForbiddenError, ValidationError
+from utils.error_codes import ErrorCode
 
 # --- Controller (Business Logic) ---
 class PostController:
+    """게시글 관련 비즈니스 로직"""
     def __init__(self):
         # Phase 3: Model 계층 사용
         # 임시 사용자 정보 (인증 구현 전까지 하드코딩)
@@ -13,17 +15,17 @@ class PostController:
 
     def get_all_posts(self):
         """게시글 목록 조회 로직"""
-        posts_data = board_model.get_posts()
+        posts_data = post_model.get_posts()
         return posts_data
 
     def get_post_by_id(self, post_id: str):
         """게시글 상세 조회 로직"""
-        post = board_model.get_post_by_id(post_id)
+        post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise PostNotFoundError(post_id)
 
         # 조회수 증가
-        board_model.increment_view_count(post_id)
+        post_model.increment_view_count(post_id)
 
         return post
 
@@ -34,12 +36,12 @@ class PostController:
         content = req.get("content", "").strip()
 
         if not title:
-            raise ForbiddenError("제목은 비어있을 수 없습니다")
+            raise ValidationError(ErrorCode.TITLE_TOO_SHORT, {"field": "title"})
         if not content:
-            raise ForbiddenError("내용은 비어있을 수 없습니다")
+            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
 
         # Model을 통해 게시글 생성
-        post_data = board_model.create_post(
+        post_data = post_model.create_post(
             title=title,
             content=content,
             author_id=self.MOCK_USER_ID,
@@ -50,25 +52,25 @@ class PostController:
 
     def update_post(self, post_id: str, req: Dict):
         """게시글 수정 로직"""
-        post = board_model.get_post_by_id(post_id)
+        post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise PostNotFoundError(post_id)
 
-        # TODO: Phase 7에서 세션 기반 권한 확인 추가
+        # TODO: 세션 기반 권한 확인 로직 구현 (Phase 7)
         if post["author_id"] != self.MOCK_USER_ID:
-            raise ForbiddenError("게시글 작성자만 수정할 수 있습니다")
+            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
 
         # 입력값 검증
         title = req.get("title", "").strip()
         content = req.get("content", "").strip()
 
         if not title:
-            raise ForbiddenError("제목은 비어있을 수 없습니다")
+            raise ValidationError(ErrorCode.TITLE_TOO_SHORT, {"field": "title"})
         if not content:
-            raise ForbiddenError("내용은 비어있을 수 없습니다")
+            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
 
         # Model을 통해 게시글 수정
-        updated_post = board_model.update_post(
+        updated_post = post_model.update_post(
             post_id=post_id,
             title=title,
             content=content
@@ -78,20 +80,20 @@ class PostController:
 
     def delete_post(self, post_id: str):
         """게시글 삭제 로직"""
-        post = board_model.get_post_by_id(post_id)
+        post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise PostNotFoundError(post_id)
 
-        # TODO: Phase 7에서 세션 기반 권한 확인 추가
+        # TODO: 세션 기반 권한 확인 로직 구현 (Phase 7)
         if post["author_id"] != self.MOCK_USER_ID:
-            raise ForbiddenError("게시글 작성자만 삭제할 수 있습니다")
+            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
 
         # 게시글 삭제 시 관련 댓글들도 함께 삭제
         from models import comment_model
         deleted_comments_count = comment_model.delete_comments_by_post(post_id)
 
         # Model을 통해 게시글 삭제
-        board_model.delete_post(post_id)
+        post_model.delete_post(post_id)
 
         return post
 

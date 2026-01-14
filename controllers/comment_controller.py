@@ -1,6 +1,6 @@
 from typing import List, Dict
 from models import comment_model, post_model
-from utils.exceptions import NotFoundError, ForbiddenError
+from utils.exceptions import NotFoundError, ForbiddenError, ValidationError
 
 # --- Controller (Business Logic) ---
 class CommentController:
@@ -32,7 +32,7 @@ class CommentController:
         # 입력값 검증
         content = req.get("content", "").strip()
         if not content:
-            raise ForbiddenError("댓글 내용은 비어있을 수 없습니다")
+            raise ValidationError("EMPTY_CONTENT", {"field": "content"})
 
         # 댓글 생성
         comment_data = comment_model.create_comment(
@@ -62,12 +62,12 @@ class CommentController:
 
         # 권한 확인 (작성자만 수정 가능)
         if comment["user_id"] != self.MOCK_USER_ID:
-            raise ForbiddenError("댓글 작성자만 수정할 수 있습니다")
+            raise ForbiddenError("NOT_OWNER", {"resource": "댓글"})
 
         # 입력값 검증
         content = req.get("content", "").strip()
         if not content:
-            raise ForbiddenError("댓글 내용은 비어있을 수 없습니다")
+            raise ValidationError("EMPTY_CONTENT", {"field": "content"})
 
         # 댓글 수정
         updated_comment = comment_model.update_comment(
@@ -98,7 +98,7 @@ class CommentController:
 
         # 권한 확인 (작성자만 삭제 가능)
         if comment["user_id"] != self.MOCK_USER_ID:
-            raise ForbiddenError("댓글 작성자만 삭제할 수 있습니다")
+            raise ForbiddenError("NOT_OWNER", {"resource": "댓글"})
 
         # 댓글 삭제
         comment_model.delete_comment(comment_id)

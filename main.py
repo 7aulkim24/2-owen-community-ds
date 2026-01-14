@@ -1,9 +1,25 @@
+"""
+FastAPI 애플리케이션 메인 파일
+- 예외 처리 핸들러
+- CORS 설정
+- 라우터 등록
+"""
+
+import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from utils.exceptions import APIException
 from utils.response import StandardResponse
+from utils.error_codes import ErrorCode, SuccessCode
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Owen Community Backend",
@@ -32,9 +48,7 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
     요청 본문 검증 실패 시 발동
     예: 이메일 필드가 없거나, 형식이 잘못됨
     """
-    # ValidationError.errors()는 필드별 상세 정보 포함
-    # MISSING_FIELD: 필드 자체가 없음
-    # INVALID_FORMAT: 형식 규칙 위반
+    logger.warning(f"Validation error at {request.url}: {exc.errors()}")
     return JSONResponse(
         status_code=422,
         content=StandardResponse.validation_error(exc.errors())
@@ -47,25 +61,34 @@ async def api_exception_handler(request: Request, exc: APIException):
     Service에서 명시적으로 발생시킨 예외 처리
     예: 중복된 이메일, 권한 없음, 리소스 없음
     """
+    logger.info(f"API exception at {request.url}: {exc.code} - {exc.message}")
     return JSONResponse(
         status_code=exc.status_code,
-        content=StandardResponse.error(exc.code, exc.details)
+        content=StandardResponse.error(exc.code, exc.message, exc.details, exc.status_code)
     )
 
 # 예상치 못한 서버 오류
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """모든 예상 밖의 오류를 500으로 처리"""
+    """
+    모든 예상 밖의 오류를 500으로 처리하고 로깅
+    """
+    # Stack Trace를 포함한 로깅
+    logger.error(
+        f"Unexpected error at {request.url}: {str(exc)}",
+        exc_info=True  # Stack trace 포함
+    )
+    
     return JSONResponse(
         status_code=500,
-        content=StandardResponse.error("INTERNAL_SERVER_ERROR", {})
+        content=StandardResponse.error(ErrorCode.INTERNAL_SERVER_ERROR, None, {}, 500)
     )
 
 # 헬스 체크 엔드포인트
 @app.get("/health")
 async def health_check():
     """서버 상태 확인"""
-    return StandardResponse.success("HEALTH_CHECK_OK", {"status": "healthy"})
+    return StandardResponse.success(SuccessCode.HEALTH_CHECK_OK, {"status": "healthy"})
 
 # 라우터 등록
 from routers import post_router, user_router, comment_router
