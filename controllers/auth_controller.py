@@ -9,6 +9,8 @@ from utils.exceptions import (
     ValidationError,
 )
 from utils.error_codes import ErrorCode
+from schemas.auth_schema import SignupRequest, LoginRequest
+from schemas.error_schema import ValidationErrorDetail
 
 
 class AuthController:
@@ -25,33 +27,23 @@ class AuthController:
             "updated_at": user.get("updated_at"),
         }
 
-    def signup(self, req: Dict) -> Dict:
+    def signup(self, req: SignupRequest) -> Dict:
         """회원가입"""
-        email = (req.get("email") or "").strip()
-        password = (req.get("password") or "").strip()
-        nickname = (req.get("nickname") or "").strip()
-        profile_image_url = req.get("profile_image_url")
+        # Pydantic에서 이미 검증되었으므로 수동 필드 검증 제거
+        
+        if user_model.email_exists(req.email):
+            raise DuplicateEmailError(req.email)
+        if user_model.nickname_exists(req.nickname):
+            raise DuplicateNicknameError(req.nickname)
 
-        if not email or not password or not nickname:
-            raise ValidationError(ErrorCode.MISSING_FIELD, {"field": "email/password/nickname"})
-        if len(password) < 8:
-            raise ValidationError(ErrorCode.PASSWORD_TOO_SHORT, {"field": "password"})
-        if user_model.email_exists(email):
-            raise DuplicateEmailError(email)
-        if user_model.nickname_exists(nickname):
-            raise DuplicateNicknameError(nickname)
-
-        user = user_model.create_user(email, password, nickname, profile_image_url)
+        user = user_model.create_user(req.email, req.password, req.nickname, req.profile_image_url)
         return self._sanitize_user(user)
 
-    def login(self, req: Dict, request: Request) -> Dict:
+    def login(self, req: LoginRequest, request: Request) -> Dict:
         """로그인"""
-        email = (req.get("email") or "").strip()
-        password = (req.get("password") or "").strip()
-        if not email or not password:
-            raise ValidationError(ErrorCode.MISSING_FIELD, {"field": "email/password"})
+        # Pydantic에서 이미 검증되었으므로 수동 필드 검증 제거
 
-        user = user_model.authenticate_user(email, password)
+        user = user_model.authenticate_user(req.email, req.password)
         if not user:
             raise UnauthorizedError(ErrorCode.INVALID_CREDENTIALS)
 

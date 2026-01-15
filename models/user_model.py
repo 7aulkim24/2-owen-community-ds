@@ -12,13 +12,7 @@ class UserModel:
 
     def _normalize_id(self, id_val: Union[UUID, str]) -> str:
         """ID 정규화"""
-        if isinstance(id_val, UUID):
-            return str(id_val)
-        try:
-            UUID(id_val)
-            return id_val
-        except (ValueError, AttributeError):
-            raise ValueError(f"Invalid UUID format: {id_val}")
+        return str(id_val)
 
     def get_next_user_id(self) -> str:
         """다음 사용자 ID 생성"""
@@ -43,11 +37,8 @@ class UserModel:
 
     def get_user_by_id(self, user_id: Union[UUID, str]) -> Optional[Dict]:
         """ID로 사용자 조회"""
-        try:
-            user_id_str = self._normalize_id(user_id)
-            return self.users_db.get(user_id_str)
-        except ValueError:
-            return None
+        user_id_str = self._normalize_id(user_id)
+        return self.users_db.get(user_id_str)
 
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         """이메일로 사용자 조회"""
@@ -69,32 +60,26 @@ class UserModel:
 
     def update_user(self, user_id: Union[UUID, str], update_data: Dict) -> Optional[Dict]:
         """사용자 정보 수정"""
-        try:
-            user_id_str = self._normalize_id(user_id)
-            if user_id_str not in self.users_db:
-                return None
-
-            user = self.users_db[user_id_str]
-            allowed_fields = ["nickname", "profile_image_url", "password"]
-            for field in allowed_fields:
-                if field in update_data:
-                    user[field] = update_data[field]
-
-            user["updated_at"] = datetime.now().isoformat()
-            return user.copy()
-        except ValueError:
+        user_id_str = self._normalize_id(user_id)
+        if user_id_str not in self.users_db:
             return None
+
+        user = self.users_db[user_id_str]
+        allowed_fields = ["nickname", "profile_image_url", "password"]
+        for field in allowed_fields:
+            if field in update_data:
+                user[field] = update_data[field]
+
+        user["updated_at"] = datetime.now().isoformat()
+        return user.copy()
 
     def delete_user(self, user_id: Union[UUID, str]) -> bool:
         """사용자 삭제"""
-        try:
-            user_id_str = self._normalize_id(user_id)
-            if user_id_str in self.users_db:
-                del self.users_db[user_id_str]
-                return True
-            return False
-        except ValueError:
-            return False
+        user_id_str = self._normalize_id(user_id)
+        if user_id_str in self.users_db:
+            del self.users_db[user_id_str]
+            return True
+        return False
 
     def get_all_users(self) -> List[Dict]:
         """모든 사용자 조회"""

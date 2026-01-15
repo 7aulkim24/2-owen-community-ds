@@ -4,6 +4,8 @@ from uuid import UUID
 from models import post_model
 from utils.exceptions import PostNotFoundError, ForbiddenError, ValidationError
 from utils.error_codes import ErrorCode
+from schemas.post_schema import PostCreateRequest, PostUpdateRequest
+from schemas.error_schema import ResourceError, ValidationErrorDetail
 
 # --- Controller (Business Logic) ---
 class PostController:
@@ -27,28 +29,21 @@ class PostController:
 
         return post
 
-    def create_post(self, req: Dict, user: Dict):
+    def create_post(self, req: PostCreateRequest, user: Dict):
         """게시글 생성 로직"""
-        # 입력값 검증
-        title = req.get("title", "").strip()
-        content = req.get("content", "").strip()
-
-        if not title:
-            raise ValidationError(ErrorCode.TITLE_TOO_SHORT, {"field": "title"})
-        if not content:
-            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
-
+        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
+        
         # Model을 통해 게시글 생성
         post_data = post_model.create_post(
-            title=title,
-            content=content,
+            title=req.title,
+            content=req.content,
             author_id=user["user_id"],
             author_nickname=user["nickname"]
         )
 
         return post_data
 
-    def update_post(self, post_id: Union[UUID, str], req: Dict, user: Dict):
+    def update_post(self, post_id: Union[UUID, str], req: PostUpdateRequest, user: Dict):
         """게시글 수정 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
@@ -56,22 +51,15 @@ class PostController:
 
         # 권한 확인 (작성자 확인)
         if str(post["author_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
+            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
 
-        # 입력값 검증
-        title = req.get("title", "").strip()
-        content = req.get("content", "").strip()
-
-        if not title:
-            raise ValidationError(ErrorCode.TITLE_TOO_SHORT, {"field": "title"})
-        if not content:
-            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
+        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
         # Model을 통해 게시글 수정
         updated_post = post_model.update_post(
             post_id=post_id,
-            title=title,
-            content=content
+            title=req.title,
+            content=req.content
         )
 
         return updated_post
@@ -84,7 +72,7 @@ class PostController:
 
         # 권한 확인
         if str(post["author_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
+            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
 
         # 게시글 삭제 시 관련 댓글들도 함께 삭제
         from models import comment_model

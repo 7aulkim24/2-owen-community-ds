@@ -7,11 +7,13 @@ FastAPI 애플리케이션 메인 파일
 
 import logging
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
+
 from utils.exceptions import APIException
 from utils.response import StandardResponse
 from utils.error_codes import ErrorCode, SuccessCode
@@ -36,10 +38,10 @@ app.add_middleware(AuthMiddleware)
 # 세션 설정 (로컬 개발 환경 기준)
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SECRET_KEY,
-    https_only=settings.COOKIE_SECURE,
-    same_site=settings.COOKIE_SAMESITE,
-    max_age=settings.SESSION_TIMEOUT
+    secret_key=settings.secret_key,
+    https_only=settings.cookie_secure,
+    same_site=settings.cookie_samesite,
+    max_age=settings.session_timeout
 )
 
 # CORS 설정 (프론트엔드 연동)
@@ -57,8 +59,8 @@ app.add_middleware(
 )
 
 # Pydantic 검증 실패 처리 (요청 형식 오류)
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     요청 본문 검증 실패 시 발동
     예: 이메일 필드가 없거나, 형식이 잘못됨

@@ -3,6 +3,8 @@ from uuid import UUID
 from models import comment_model, post_model
 from utils.exceptions import NotFoundError, ForbiddenError, ValidationError
 from utils.error_codes import ErrorCode
+from schemas.comment_schema import CommentCreateRequest, CommentUpdateRequest
+from schemas.error_schema import ResourceError
 
 # --- Controller (Business Logic) ---
 class CommentController:
@@ -22,29 +24,26 @@ class CommentController:
         comments = comment_model.get_comments_by_post(post_id)
         return comments
 
-    def create_comment(self, post_id: Union[UUID, str], req: Dict, user: Dict) -> Dict:
+    def create_comment(self, post_id: Union[UUID, str], req: CommentCreateRequest, user: Dict) -> Dict:
         """댓글 작성"""
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
         if not post:
             raise NotFoundError("게시글")
 
-        # 입력값 검증
-        content = req.get("content", "").strip()
-        if not content:
-            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
+        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
         # 댓글 생성
         comment_data = comment_model.create_comment(
             post_id=post_id,
             user_id=user["user_id"],
             user_nickname=user["nickname"],
-            content=content
+            content=req.content
         )
 
         return comment_data
 
-    def update_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], req: Dict, user: Dict) -> Dict:
+    def update_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], req: CommentUpdateRequest, user: Dict) -> Dict:
         """댓글 수정"""
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
@@ -62,17 +61,14 @@ class CommentController:
 
         # 권한 확인 (작성자만 수정 가능)
         if str(comment["user_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "댓글"})
+            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
 
-        # 입력값 검증
-        content = req.get("content", "").strip()
-        if not content:
-            raise ValidationError(ErrorCode.EMPTY_CONTENT, {"field": "content"})
+        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
         # 댓글 수정
         updated_comment = comment_model.update_comment(
             comment_id=comment_id,
-            content=content
+            content=req.content
         )
 
         if not updated_comment:
@@ -98,7 +94,7 @@ class CommentController:
 
         # 권한 확인 (작성자만 삭제 가능)
         if str(comment["user_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "댓글"})
+            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
 
         # 댓글 삭제
         comment_model.delete_comment(comment_id)
