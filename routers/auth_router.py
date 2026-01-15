@@ -4,7 +4,7 @@ from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.auth_controller import auth_controller
 
-router = APIRouter(prefix="/api/auth", tags=["인증"])
+router = APIRouter(prefix="/v1/auth", tags=["인증"])
 
 
 @router.post("/signup", response_model=None, status_code=status.HTTP_201_CREATED)

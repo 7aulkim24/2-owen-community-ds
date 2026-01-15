@@ -35,12 +35,10 @@ async def create_post(req: Dict, request: Request):
     - 인증된 사용자만 작성 가능
     - title, content 필수
     """
-    user_id = request.session.get("user_id")
-    nickname = request.session.get("nickname")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
     
-    data = post_controller.create_post(req, user_id, nickname)
+    data = post_controller.create_post(req, request.state.user)
     return StandardResponse.success(SuccessCode.POST_CREATED, data, 201)
 
 @router.patch("/{post_id}", response_model=None, status_code=status.HTTP_200_OK)
@@ -50,11 +48,10 @@ async def update_post(post_id: UUID, req: Dict, request: Request):
     - 작성자만 수정 가능
     - title, content 수정 가능
     """
-    user_id = request.session.get("user_id")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
         
-    data = post_controller.update_post(post_id, req, user_id)
+    data = post_controller.update_post(post_id, req, request.state.user)
     return StandardResponse.success(SuccessCode.POST_UPDATED, data)
 
 @router.delete("/{post_id}", response_model=None, status_code=status.HTTP_200_OK)
@@ -63,11 +60,10 @@ async def delete_post(post_id: UUID, request: Request):
     게시글 삭제
     - 작성자만 삭제 가능
     """
-    user_id = request.session.get("user_id")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
         
-    deleted_post = post_controller.delete_post(post_id, user_id)
+    deleted_post = post_controller.delete_post(post_id, request.state.user)
     return StandardResponse.success(
         SuccessCode.POST_DELETED, 
         {"post_id": deleted_post["post_id"], "message": "게시글이 삭제되었습니다"}

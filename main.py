@@ -15,6 +15,7 @@ from config import settings
 from utils.exceptions import APIException
 from utils.response import StandardResponse
 from utils.error_codes import ErrorCode, SuccessCode
+from utils.auth_middleware import AuthMiddleware
 
 # 로깅 설정
 logging.basicConfig(
@@ -28,6 +29,9 @@ app = FastAPI(
     description="FastAPI 기반 커뮤니티 백엔드 API",
     version="1.0.0"
 )
+
+# 인증 미들웨어 등록
+app.add_middleware(AuthMiddleware)
 
 # 세션 설정 (로컬 개발 환경 기준)
 app.add_middleware(

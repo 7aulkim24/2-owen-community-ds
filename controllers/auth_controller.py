@@ -68,14 +68,10 @@ class AuthController:
 
     def get_me(self, request: Request) -> Dict:
         """내 정보 조회"""
-        user_id = request.session.get("user_id")
-        if not user_id:
+        if not request.state.user:
             raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
 
-        user = user_model.get_user_by_id(user_id)
-        if not user:
-            raise UserNotFoundError(user_id)
-        return self._sanitize_user(user)
+        return self._sanitize_user(request.state.user)
 
 
 auth_controller = AuthController()

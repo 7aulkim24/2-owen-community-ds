@@ -27,12 +27,10 @@ async def create_comment(post_id: UUID, req: Dict, request: Request):
     - content 필수
     - 게시글이 존재하지 않으면 404 에러
     """
-    user_id = request.session.get("user_id")
-    nickname = request.session.get("nickname")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
         
-    data = comment_controller.create_comment(post_id, req, user_id, nickname)
+    data = comment_controller.create_comment(post_id, req, request.state.user)
     return StandardResponse.success(SuccessCode.COMMENT_CREATED, {"comment_id": data["comment_id"]}, 201)
 
 @router.patch("/{post_id}/comments/{comment_id}", response_model=None, status_code=status.HTTP_200_OK)
@@ -43,11 +41,10 @@ async def update_comment(post_id: UUID, comment_id: UUID, req: Dict, request: Re
     - content 수정 가능
     - 게시글이나 댓글이 존재하지 않으면 404 에러
     """
-    user_id = request.session.get("user_id")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
         
-    data = comment_controller.update_comment(post_id, comment_id, req, user_id)
+    data = comment_controller.update_comment(post_id, comment_id, req, request.state.user)
     return StandardResponse.success(SuccessCode.COMMENT_UPDATED, None)
 
 @router.delete("/{post_id}/comments/{comment_id}", response_model=None, status_code=status.HTTP_200_OK)
@@ -57,11 +54,10 @@ async def delete_comment(post_id: UUID, comment_id: UUID, request: Request):
     - 작성자만 삭제 가능
     - 게시글이나 댓글이 존재하지 않으면 404 에러
     """
-    user_id = request.session.get("user_id")
-    if not user_id:
+    if not request.state.user:
         raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
         
-    deleted_comment = comment_controller.delete_comment(post_id, comment_id, user_id)
+    deleted_comment = comment_controller.delete_comment(post_id, comment_id, request.state.user)
     return StandardResponse.success(
         SuccessCode.COMMENT_DELETED,
         {"comment_id": deleted_comment["comment_id"], "message": "댓글이 삭제되었습니다"}

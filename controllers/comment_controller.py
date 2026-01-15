@@ -22,7 +22,7 @@ class CommentController:
         comments = comment_model.get_comments_by_post(post_id)
         return comments
 
-    def create_comment(self, post_id: Union[UUID, str], req: Dict, user_id: str, nickname: str) -> Dict:
+    def create_comment(self, post_id: Union[UUID, str], req: Dict, user: Dict) -> Dict:
         """댓글 작성"""
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
@@ -37,14 +37,14 @@ class CommentController:
         # 댓글 생성
         comment_data = comment_model.create_comment(
             post_id=post_id,
-            user_id=user_id,
-            user_nickname=nickname,
+            user_id=user["user_id"],
+            user_nickname=user["nickname"],
             content=content
         )
 
         return comment_data
 
-    def update_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], req: Dict, user_id: str) -> Dict:
+    def update_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], req: Dict, user: Dict) -> Dict:
         """댓글 수정"""
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
@@ -61,7 +61,7 @@ class CommentController:
             raise NotFoundError("댓글")
 
         # 권한 확인 (작성자만 수정 가능)
-        if str(comment["user_id"]) != str(user_id):
+        if str(comment["user_id"]) != str(user["user_id"]):
             raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "댓글"})
 
         # 입력값 검증
@@ -80,7 +80,7 @@ class CommentController:
 
         return updated_comment
 
-    def delete_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], user_id: str) -> Dict:
+    def delete_comment(self, post_id: Union[UUID, str], comment_id: Union[UUID, str], user: Dict) -> Dict:
         """댓글 삭제"""
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
@@ -97,7 +97,7 @@ class CommentController:
             raise NotFoundError("댓글")
 
         # 권한 확인 (작성자만 삭제 가능)
-        if str(comment["user_id"]) != str(user_id):
+        if str(comment["user_id"]) != str(user["user_id"]):
             raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "댓글"})
 
         # 댓글 삭제

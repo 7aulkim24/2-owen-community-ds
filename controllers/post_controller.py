@@ -27,7 +27,7 @@ class PostController:
 
         return post
 
-    def create_post(self, req: Dict, user_id: str, nickname: str):
+    def create_post(self, req: Dict, user: Dict):
         """게시글 생성 로직"""
         # 입력값 검증
         title = req.get("title", "").strip()
@@ -42,20 +42,20 @@ class PostController:
         post_data = post_model.create_post(
             title=title,
             content=content,
-            author_id=user_id,
-            author_nickname=nickname
+            author_id=user["user_id"],
+            author_nickname=user["nickname"]
         )
 
         return post_data
 
-    def update_post(self, post_id: Union[UUID, str], req: Dict, user_id: str):
+    def update_post(self, post_id: Union[UUID, str], req: Dict, user: Dict):
         """게시글 수정 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
             raise PostNotFoundError(str(post_id))
 
         # 권한 확인 (작성자 확인)
-        if str(post["author_id"]) != str(user_id):
+        if str(post["author_id"]) != str(user["user_id"]):
             raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
 
         # 입력값 검증
@@ -76,14 +76,14 @@ class PostController:
 
         return updated_post
 
-    def delete_post(self, post_id: Union[UUID, str], user_id: str):
+    def delete_post(self, post_id: Union[UUID, str], user: Dict):
         """게시글 삭제 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
             raise PostNotFoundError(str(post_id))
 
         # 권한 확인
-        if str(post["author_id"]) != str(user_id):
+        if str(post["author_id"]) != str(user["user_id"]):
             raise ForbiddenError(ErrorCode.NOT_OWNER, {"resource": "게시글"})
 
         # 게시글 삭제 시 관련 댓글들도 함께 삭제
