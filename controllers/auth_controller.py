@@ -4,60 +4,64 @@ from models import user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas.auth_schema import SignupRequest, LoginRequest
-from schemas.error_schema import ValidationErrorDetail, FieldError, ResourceError
+from schemas.error_schema import FieldError
 
 
 class AuthController:
     """인증 관련 비즈니스 로직"""
 
-    def _sanitize_user(self, user: Dict) -> Dict:
+    def _sanitizeUser(self, user: Dict) -> Dict:
         """응답에서 민감 정보 제거"""
         return {
-            "user_id": user.get("user_id"),
+            "userId": user.get("userId"),
             "email": user.get("email"),
             "nickname": user.get("nickname"),
-            "profile_image_url": user.get("profile_image_url"),
-            "created_at": user.get("created_at"),
-            "updated_at": user.get("updated_at"),
+            "profileImageUrl": user.get("profileImageUrl"),
+            "createdAt": user.get("createdAt"),
+            "updatedAt": user.get("updatedAt"),
         }
 
     def signup(self, req: SignupRequest) -> Dict:
         """회원가입"""
-        # Pydantic에서 이미 검증되었으므로 수동 필드 검증 제거
-        
-        if user_model.email_exists(req.email):
-            raise APIError(ErrorCode.DUPLICATE_EMAIL, FieldError(field="email", value=req.email))
-        if user_model.nickname_exists(req.nickname):
-            raise APIError(ErrorCode.DUPLICATE_NICKNAME, FieldError(field="nickname", value=req.nickname))
+        if user_model.emailExists(req.email):
+            raise APIError(ErrorCode.EMAIL_ALREADY_EXISTS, FieldError(field="email", value=req.email))
+        if user_model.nicknameExists(req.nickname):
+            raise APIError(ErrorCode.NICKNAME_ALREADY_EXISTS, FieldError(field="nickname", value=req.nickname))
 
-        user = user_model.create_user(req.email, req.password, req.nickname, req.profile_image_url)
-        return self._sanitize_user(user)
+        user = user_model.createUser(req.email, req.password, req.nickname, req.profileImageUrl)
+        return self._sanitizeUser(user)
 
     def login(self, req: LoginRequest, request: Request) -> Dict:
         """로그인"""
-        # Pydantic에서 이미 검증되었으므로 수동 필드 검증 제거
-
-        user = user_model.authenticate_user(req.email, req.password)
+        user = user_model.authenticateUser(req.email, req.password)
         if not user:
             raise APIError(ErrorCode.INVALID_CREDENTIALS)
 
-        request.session["user_id"] = user["user_id"]
+        request.session["userId"] = user["userId"]
         request.session["email"] = user["email"]
         request.session["nickname"] = user["nickname"]
-        request.session["profile_image_url"] = user.get("profile_image_url")
-        return self._sanitize_user(user)
+        request.session["profileImageUrl"] = user.get("profileImageUrl")
+        return self._sanitizeUser(user)
 
     def logout(self, request: Request) -> Dict:
         """로그아웃"""
         request.session.clear()
         return {}
 
-    def get_me(self, request: Request) -> Dict:
+    def getMe(self, request: Request) -> Dict:
         """내 정보 조회"""
-        if not request.state.user:
+        if not hasattr(request.state, "user") or not request.state.user:
             raise APIError(ErrorCode.UNAUTHORIZED)
 
-        return self._sanitize_user(request.state.user)
+        return self._sanitizeUser(request.state.user)
+
+    def checkEmailAvailability(self, email: str) -> Dict:
+        """이메일 중복 확인"""
+        return {"available": not user_model.emailExists(email)}
+
+    def checkNicknameAvailability(self, nickname: str) -> Dict:
+        """닉네임 중복 확인"""
+        return {"available": not user_model.nicknameExists(nickname)}
 
 
 auth_controller = AuthController()

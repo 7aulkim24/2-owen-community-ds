@@ -13,16 +13,7 @@ class StandardResponse:
 
     @staticmethod
     def success(code: SuccessCode, data: Any = None) -> Dict:
-        """
-        성공 응답 생성
-        
-        Args:
-            code: SuccessCode 열거형
-            data: 응답 데이터
-            
-        Returns:
-            표준 성공 응답 딕셔너리
-        """
+        """성공 응답 생성"""
         return {
             "code": code.value,
             "message": get_success_message(code),
@@ -31,41 +22,39 @@ class StandardResponse:
 
     @staticmethod
     def error(code: ErrorCode, details: Dict = None) -> Dict:
-        """
-        에러 응답 생성
-        
-        Args:
-            code: ErrorCode 열거형
-            details: 상세 정보
-            
-        Returns:
-            표준 에러 응답 딕셔너리
-        """
+        """에러 응답 생성"""
         return {
             "code": code.value,
-            "details": details if details is not None else {}
+            "data": details if details is not None else None # 설계도 규격(data 필드 사용) 준수
         }
 
     @staticmethod
     def validation_error(errors: List) -> Dict:
         """
-        Pydantic 검증 실패 응답
-        
-        Args:
-            errors: Pydantic ValidationError.errors() 결과
-            
-        Returns:
-            표준 검증 에러 응답 딕셔너리
+        Pydantic 검증 실패 응답 (설계도 60라인 규격 준수)
         """
-        # ValidationError.errors()는 [{"type": "missing", "loc": ("email",), ...}] 형태
-        field_errors = []
+        field_details = {}
         for error in errors:
-            field_errors.append({
-                "field": error["loc"][-1],  # 마지막 경로가 필드명
-                "type": error["type"],       # missing, value_error, type_error 등
-                "message": error.get("msg", "Invalid value")
-            })
+            field_name = str(error["loc"][-1])
+            error_type = error["type"]
+            
+            # 설계도 예시: "email": ["REQUIRED", "INVALID_FORMAT"]
+            if field_name not in field_details:
+                field_details[field_name] = []
+            
+            # Pydantic 에러 타입을 설계도 태그로 매핑
+            tag = "INVALID_FORMAT"
+            if "missing" in error_type:
+                tag = "REQUIRED"
+            elif "too_long" in error_type:
+                tag = "TOO_LONG"
+            elif "too_short" in error_type:
+                tag = "TOO_SHORT"
+                
+            if tag not in field_details[field_name]:
+                field_details[field_name].append(tag)
+                
         return {
-            "code": ErrorCode.VALIDATION_ERROR.value,
-            "details": {"fields": field_errors}
+            "code": ErrorCode.INVALID_INPUT.value,
+            "data": field_details
         }

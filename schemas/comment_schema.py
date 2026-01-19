@@ -1,17 +1,22 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 from typing import Optional
+from .base_schema import BaseSchema
 
-class CommentCreateRequest(BaseModel):
+class CommentCreateRequest(BaseSchema):
     content: str = Field(..., min_length=1)
 
-class CommentUpdateRequest(BaseModel):
+class CommentUpdateRequest(BaseSchema):
     content: str = Field(..., min_length=1)
 
-class CommentResponse(BaseModel):
-    comment_id: str
-    post_id: str
-    user_id: str
-    user_nickname: str
+class CommentAuthor(BaseSchema):
+    userId: str
+    nickname: str
+    profileImageUrl: Optional[str] = None
+
+class CommentResponse(BaseSchema):
+    commentId: str
+    postId: str
     content: str
-    created_at: str
-    updated_at: Optional[str] = None
+    author: CommentAuthor
+    createdAt: str
+    updatedAt: Optional[str] = None

@@ -1,21 +1,37 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 from typing import Optional
-from uuid import UUID
+from .base_schema import BaseSchema
 
-class PostCreateRequest(BaseModel):
+class PostCreateRequest(BaseSchema):
     title: str = Field(..., min_length=1, max_length=100)
     content: str = Field(..., min_length=1)
+    fileUrl: Optional[str] = None
 
-class PostUpdateRequest(BaseModel):
+class PostUpdateRequest(BaseSchema):
     title: str = Field(..., min_length=1, max_length=100)
     content: str = Field(..., min_length=1)
+    fileUrl: Optional[str] = None
 
-class PostResponse(BaseModel):
-    post_id: str
+class PostAuthor(BaseSchema):
+    userId: str
+    nickname: str
+    profileImageUrl: Optional[str] = None
+
+class PostFile(BaseSchema):
+    fileId: str
+    fileUrl: str
+
+class PostResponse(BaseSchema):
+    postId: str
     title: str
     content: str
-    author_id: str
-    author_nickname: str
-    created_at: str
-    updated_at: Optional[str] = None
-    view_count: int
+    likeCount: int = 0
+    commentCount: int = 0
+    hits: int = 0
+    author: PostAuthor
+    file: Optional[PostFile] = None
+    createdAt: str
+    updatedAt: Optional[str] = None
+
+class PostImageUploadResponse(BaseSchema):
+    postFileUrl: str

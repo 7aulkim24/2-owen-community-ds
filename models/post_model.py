@@ -8,99 +8,120 @@ class PostModel:
 
     def __init__(self):
         # 메모리 기반 게시글 저장소 (Key를 문자열로 관리하여 JSON 직렬화 호환성 확보)
-        self.posts_db: Dict[str, Dict] = {}
+        self.postsDb: Dict[str, Dict] = {}
+        # 좋아요 기록 저장소 {postId: {userId1, userId2, ...}}
+        self.likesDb: Dict[str, set] = {}
 
-    def _normalize_id(self, id_val: Union[UUID, str]) -> str:
+    def _normalizeId(self, idVal: Union[UUID, str]) -> str:
         """UUID 객체 또는 문자열을 문자열 형식의 UUID로 정규화"""
-        return str(id_val)
+        return str(idVal)
 
-    def get_next_post_id(self) -> str:
+    def getNextPostId(self) -> str:
         """다음 게시글 ID 생성 (문자열로 반환)"""
         return str(uuid4())
 
-    def create_post(self, title: str, content: str, author_id: Union[UUID, str], author_nickname: str) -> Dict:
+    def createPost(self, title: str, content: str, authorId: Union[UUID, str], authorNickname: str, fileUrl: Optional[str] = None) -> Dict:
         """게시글 생성"""
-        post_id = self.get_next_post_id()
-        author_id_str = self._normalize_id(author_id)
+        postId = self.getNextPostId()
+        authorIdStr = self._normalizeId(authorId)
 
-        post_data = {
-            "post_id": post_id,
+        postData = {
+            "postId": postId,
             "title": title,
             "content": content,
-            "author_id": author_id_str,
-            "author_nickname": author_nickname,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": None,
-            "view_count": 0
+            "authorId": authorIdStr,
+            "authorNickname": authorNickname,
+            "fileUrl": fileUrl,
+            "createdAt": datetime.now().isoformat(),
+            "updatedAt": None,
+            "hits": 0
         }
 
-        self.posts_db[post_id] = post_data
-        return post_data.copy()
+        self.postsDb[postId] = postData
+        self.likesDb[postId] = set()
+        return postData.copy()
 
-    def get_posts(self, limit: int = 10, offset: int = 0) -> List[Dict]:
+    def getPosts(self, limit: int = 10, offset: int = 0) -> List[Dict]:
         """게시글 목록 조회 (페이징 지원)"""
         # 최신순 정렬
-        posts_list = sorted(
-            self.posts_db.values(),
-            key=lambda x: x["created_at"],
+        postsList = sorted(
+            self.postsDb.values(),
+            key=lambda x: x["createdAt"],
             reverse=True
         )
 
         # 페이징 적용
-        start_idx = offset
-        end_idx = offset + limit
-        return posts_list[start_idx:end_idx]
+        startIdx = offset
+        endIdx = offset + limit
+        return postsList[startIdx:endIdx]
 
-    def get_post_by_id(self, post_id: Union[UUID, str]) -> Optional[Dict]:
+    def getPostById(self, postId: Union[UUID, str]) -> Optional[Dict]:
         """게시글 ID로 조회"""
-        post_id_str = self._normalize_id(post_id)
-        return self.posts_db.get(post_id_str)
+        postIdStr = self._normalizeId(postId)
+        return self.postsDb.get(postIdStr)
 
-    def increment_view_count(self, post_id: Union[UUID, str]) -> bool:
+    def incrementViewCount(self, postId: Union[UUID, str]) -> bool:
         """조회수 증가"""
-        post_id_str = self._normalize_id(post_id)
-        if post_id_str in self.posts_db:
-            self.posts_db[post_id_str]["view_count"] += 1
+        postIdStr = self._normalizeId(postId)
+        if postIdStr in self.postsDb:
+            self.postsDb[postIdStr]["hits"] += 1
             return True
         return False
 
-    def update_post(self, post_id: Union[UUID, str], title: str, content: str) -> Optional[Dict]:
+    def updatePost(self, postId: Union[UUID, str], title: str, content: str, fileUrl: Optional[str] = None) -> Optional[Dict]:
         """게시글 수정"""
-        post_id_str = self._normalize_id(post_id)
-        if post_id_str not in self.posts_db:
+        postIdStr = self._normalizeId(postId)
+        if postIdStr not in self.postsDb:
             return None
 
-        post = self.posts_db[post_id_str]
+        post = self.postsDb[postIdStr]
         post["title"] = title
         post["content"] = content
-        post["updated_at"] = datetime.now().isoformat()
+        if fileUrl is not None:
+            post["fileUrl"] = fileUrl
+        post["updatedAt"] = datetime.now().isoformat()
 
         return post.copy()
 
-    def delete_post(self, post_id: Union[UUID, str]) -> bool:
+    def deletePost(self, postId: Union[UUID, str]) -> bool:
         """게시글 삭제"""
-        post_id_str = self._normalize_id(post_id)
-        if post_id_str in self.posts_db:
-            del self.posts_db[post_id_str]
+        postIdStr = self._normalizeId(postId)
+        if postIdStr in self.postsDb:
+            del self.postsDb[postIdStr]
+            if postIdStr in self.likesDb:
+                del self.likesDb[postIdStr]
             return True
         return False
 
-    def get_total_posts_count(self) -> int:
+    def getTotalPostsCount(self) -> int:
         """전체 게시글 수 조회"""
-        return len(self.posts_db)
+        return len(self.postsDb)
 
-    def get_posts_by_author(self, author_id: Union[UUID, str]) -> List[Dict]:
-        """특정 작성자의 게시글 조회"""
-        author_id_str = self._normalize_id(author_id)
-        return [post for post in self.posts_db.values() if post["author_id"] == author_id_str]
+    def toggleLike(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> int:
+        """좋아요 토글 (실무 역량을 위해 토글 방식 구현)"""
+        postIdStr = self._normalizeId(postId)
+        userIdStr = self._normalizeId(userId)
+        
+        if postIdStr not in self.likesDb:
+            self.likesDb[postIdStr] = set()
+            
+        if userIdStr in self.likesDb[postIdStr]:
+            self.likesDb[postIdStr].remove(userIdStr)
+        else:
+            self.likesDb[postIdStr].add(userIdStr)
+            
+        return len(self.likesDb[postIdStr])
 
-    def search_posts(self, keyword: str) -> List[Dict]:
-        """게시글 검색 (제목+내용)"""
-        keyword_lower = keyword.lower()
-        return [
-            post for post in self.posts_db.values()
-            if keyword_lower in post["title"].lower() or keyword_lower in post["content"].lower()
-        ]
+    def getLikeCount(self, postId: Union[UUID, str]) -> int:
+        """좋아요 수 조회"""
+        postIdStr = self._normalizeId(postId)
+        return len(self.likesDb.get(postIdStr, set()))
+
+    def isLikedByUser(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> bool:
+        """특정 사용자의 좋아요 여부"""
+        postIdStr = self._normalizeId(postId)
+        userIdStr = self._normalizeId(userId)
+        return userIdStr in self.likesDb.get(postIdStr, set())
 
 
 # Model 인스턴스 생성

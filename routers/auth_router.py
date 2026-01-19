@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Query
 from typing import Dict
 from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.auth_controller import auth_controller
-from schemas.auth_schema import SignupRequest, LoginRequest, UserResponse
+from schemas.auth_schema import SignupRequest, LoginRequest, UserResponse, EmailAvailabilityResponse, NicknameAvailabilityResponse
 from schemas.base_schema import StandardResponse as StandardResponseSchema
 
 router = APIRouter(prefix="/v1/auth", tags=["인증"])
@@ -32,6 +32,20 @@ async def logout(request: Request):
 
 @router.get("/me", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
 async def get_me(request: Request):
-    """내 정보 조회"""
-    data = auth_controller.get_me(request)
-    return StandardResponse.success(SuccessCode.GET_USER_SUCCESS, data)
+    """내 정보 조회 (로그인 상태 검증)"""
+    data = auth_controller.getMe(request)
+    return StandardResponse.success(SuccessCode.USER_RETRIEVED, data)
+
+
+@router.get("/emails/availability", response_model=StandardResponseSchema[EmailAvailabilityResponse], status_code=status.HTTP_200_OK)
+async def check_email_availability(email: str = Query(..., description="중복 확인할 이메일")):
+    """이메일 중복 체크"""
+    data = auth_controller.checkEmailAvailability(email)
+    return StandardResponse.success(SuccessCode.EMAIL_AVAILABLE, data)
+
+
+@router.get("/nicknames/availability", response_model=StandardResponseSchema[NicknameAvailabilityResponse], status_code=status.HTTP_200_OK)
+async def check_nickname_availability(nickname: str = Query(..., description="중복 확인할 닉네임")):
+    """닉네임 중복 체크"""
+    data = auth_controller.checkNicknameAvailability(nickname)
+    return StandardResponse.success(SuccessCode.NICKNAME_AVAILABLE, data)

@@ -10,7 +10,6 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 
@@ -32,7 +31,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# 인증 미들웨어 등록
+# 인증 미들웨어 등록 (세션 미들웨어보다 먼저 등록되어야 함을 주의 - FastAPI는 거꾸로 실행됨)
 app.add_middleware(AuthMiddleware)
 
 # 세션 설정 (로컬 개발 환경 기준)
@@ -108,8 +107,9 @@ async def health_check():
     return StandardResponse.success(SuccessCode.HEALTH_CHECK_OK, {"status": "healthy"})
 
 # 라우터 등록
-from routers import post_router, comment_router, auth_router
+from routers import post_router, comment_router, auth_router, user_router
 
 app.include_router(post_router)
 app.include_router(comment_router)
 app.include_router(auth_router)
+app.include_router(user_router)

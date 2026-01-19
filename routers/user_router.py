@@ -1,0 +1,75 @@
+from fastapi import APIRouter, Depends, status, Request, UploadFile, File
+from typing import Dict
+from uuid import UUID
+from utils.response import StandardResponse
+from utils.error_codes import SuccessCode
+from controllers.user_controller import user_controller
+from schemas.auth_schema import UserResponse
+from schemas.user_schema import UserUpdateRequest, PasswordChangeRequest, UserProfileImageResponse
+from schemas.base_schema import StandardResponse as StandardResponseSchema
+from utils.auth_middleware import get_current_user
+
+router = APIRouter(prefix="/v1/users", tags=["사용자"])
+
+
+@router.get("/me", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
+async def get_my_info(user: Dict = Depends(get_current_user)):
+    """현재 로그인한 사용자 정보 조회"""
+    return StandardResponse.success(SuccessCode.USER_RETRIEVED, user_controller._sanitizeUser(user))
+
+
+@router.patch("/me", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def update_my_info(req: UserUpdateRequest, user: Dict = Depends(get_current_user)):
+    """현재 로그인한 사용자 정보 수정"""
+    data = user_controller.updateUser(user["userId"], req, user)
+    return StandardResponse.success(SuccessCode.USER_UPDATED, data)
+
+
+@router.patch("/password", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def change_my_password(req: PasswordChangeRequest, user: Dict = Depends(get_current_user)):
+    """비밀번호 변경 (현재 사용자)"""
+    user_controller.changePassword(user["userId"], req, user)
+    return StandardResponse.success(SuccessCode.USER_PASSWORD_UPDATED, None)
+
+
+@router.delete("/me", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def delete_my_account(request: Request, user: Dict = Depends(get_current_user)):
+    """회원 탈퇴 (현재 사용자)"""
+    user_controller.deleteUser(user["userId"], user, request)
+    return StandardResponse.success(SuccessCode.LOGOUT_SUCCESS, None)
+
+
+@router.get("/{userId}", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
+async def get_user_info(userId: UUID):
+    """특정 사용자 정보 조회"""
+    data = user_controller.getUserById(userId)
+    return StandardResponse.success(SuccessCode.USER_FETCHED, data)
+
+
+@router.patch("/{userId}", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def update_user_info(userId: UUID, req: UserUpdateRequest, user: Dict = Depends(get_current_user)):
+    """특정 사용자 정보 수정 (본인만 가능)"""
+    data = user_controller.updateUser(userId, req, user)
+    return StandardResponse.success(SuccessCode.USER_UPDATED, data)
+
+
+@router.patch("/{userId}/password", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def change_user_password(userId: UUID, req: PasswordChangeRequest, user: Dict = Depends(get_current_user)):
+    """비밀번호 변경 (본인만 가능)"""
+    user_controller.changePassword(userId, req, user)
+    return StandardResponse.success(SuccessCode.USER_PASSWORD_UPDATED, None)
+
+
+@router.delete("/{userId}", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
+async def delete_user_account(userId: UUID, request: Request, user: Dict = Depends(get_current_user)):
+    """회원 탈퇴 (본인만 가능)"""
+    user_controller.deleteUser(userId, user, request)
+    return StandardResponse.success(SuccessCode.LOGOUT_SUCCESS, None)
+
+
+@router.post("/me/profile-image", response_model=StandardResponseSchema[UserProfileImageResponse], status_code=status.HTTP_201_CREATED)
+async def upload_profile_image(profileImage: UploadFile = File(...), user: Dict = Depends(get_current_user)):
+    """프로필 이미지 업로드"""
+    # Mock URL 반환
+    fileUrl = f"http://localhost:8000/public/image/profile/{profileImage.filename}"
+    return StandardResponse.success(SuccessCode.PROFILE_IMAGE_UPLOADED, {"profileImageUrl": fileUrl})

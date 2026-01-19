@@ -1,96 +1,132 @@
-from typing import List, Dict, Union
-from datetime import datetime
+from typing import List, Dict, Union, Optional
 from uuid import UUID
-from models import post_model
+from models import post_model, comment_model, user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas.post_schema import PostCreateRequest, PostUpdateRequest
-from schemas.error_schema import ResourceError, ValidationErrorDetail
+from schemas.error_schema import ResourceError
 
-# --- Controller (Business Logic) ---
+
 class PostController:
     """게시글 관련 비즈니스 로직"""
-    def __init__(self):
-        pass
 
-    def get_all_posts(self):
+    def _formatPost(self, post: Dict) -> Dict:
+        """Post 데이터를 API 응답 규격에 맞게 변환"""
+        author = user_model.getUserById(post["authorId"])
+        
+        # author 정보가 없으면 (탈퇴 등) 기본값 처리
+        authorData = {
+            "userId": post["authorId"],
+            "nickname": post["authorNickname"],
+            "profileImageUrl": author.get("profileImageUrl") if author else None
+        }
+
+        formatted = {
+            "postId": post["postId"],
+            "title": post["title"],
+            "content": post["content"],
+            "likeCount": post_model.getLikeCount(post["postId"]),
+            "commentCount": comment_model.getCommentsCountByPost(post["postId"]),
+            "hits": post["hits"],
+            "author": authorData,
+            "createdAt": post["createdAt"],
+            "updatedAt": post.get("updatedAt"),
+        }
+        
+        if post.get("fileUrl"):
+            formatted["file"] = {
+                "fileId": post["postId"], # 임시로 postId 사용
+                "fileUrl": post["fileUrl"]
+            }
+        else:
+            formatted["file"] = None
+            
+        return formatted
+
+    def getAllPosts(self, limit: int = 10, offset: int = 0) -> List[Dict]:
         """게시글 목록 조회 로직"""
-        posts_data = post_model.get_posts()
-        return posts_data
+        postsData = post_model.getPosts(limit=limit, offset=offset)
+        return [self._formatPost(post) for post in postsData]
 
-    def get_post_by_id(self, post_id: Union[UUID, str]):
+    def getPostById(self, postId: Union[UUID, str]) -> Dict:
         """게시글 상세 조회 로직"""
-        post = post_model.get_post_by_id(post_id)
+        post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(post_id))
+                ResourceError(resource="게시글", id=str(postId))
             )
 
         # 조회수 증가
-        post_model.increment_view_count(post_id)
+        post_model.incrementViewCount(postId)
+        # 증가된 데이터 반영을 위해 다시 조회
+        post = post_model.getPostById(postId)
 
-        return post
+        return self._formatPost(post)
 
-    def create_post(self, req: PostCreateRequest, user: Dict):
+    def createPost(self, req: PostCreateRequest, user: Dict) -> Dict:
         """게시글 생성 로직"""
-        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
-        
-        # Model을 통해 게시글 생성
-        post_data = post_model.create_post(
+        postData = post_model.createPost(
             title=req.title,
             content=req.content,
-            author_id=user["user_id"],
-            author_nickname=user["nickname"]
+            authorId=user["userId"],
+            authorNickname=user["nickname"],
+            fileUrl=req.fileUrl
         )
 
-        return post_data
+        return self._formatPost(postData)
 
-    def update_post(self, post_id: Union[UUID, str], req: PostUpdateRequest, user: Dict):
+    def updatePost(self, postId: Union[UUID, str], req: PostUpdateRequest, user: Dict) -> Dict:
         """게시글 수정 로직"""
-        post = post_model.get_post_by_id(post_id)
+        post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(post_id))
+                ResourceError(resource="게시글", id=str(postId))
             )
 
         # 권한 확인 (작성자 확인)
-        if str(post["author_id"]) != str(user["user_id"]):
-            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
+        if str(post["authorId"]) != str(user["userId"]):
+            raise APIError(ErrorCode.FORBIDDEN, ResourceError(resource="게시글"))
 
-        # Pydantic에서 이미 검증되었으므로 수동 검증 제거
-
-        # Model을 통해 게시글 수정
-        updated_post = post_model.update_post(
-            post_id=post_id,
+        updatedPost = post_model.updatePost(
+            postId=postId,
             title=req.title,
-            content=req.content
+            content=req.content,
+            fileUrl=req.fileUrl
         )
 
-        return updated_post
+        return self._formatPost(updatedPost)
 
-    def delete_post(self, post_id: Union[UUID, str], user: Dict):
+    def deletePost(self, postId: Union[UUID, str], user: Dict) -> Dict:
         """게시글 삭제 로직"""
-        post = post_model.get_post_by_id(post_id)
+        post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(post_id))
+                ResourceError(resource="게시글", id=str(postId))
             )
 
         # 권한 확인
-        if str(post["author_id"]) != str(user["user_id"]):
-            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
+        if str(post["authorId"]) != str(user["userId"]):
+            raise APIError(ErrorCode.FORBIDDEN, ResourceError(resource="게시글"))
 
         # 게시글 삭제 시 관련 댓글들도 함께 삭제
-        from models import comment_model
-        comment_model.delete_comments_by_post(post_id)
+        comment_model.deleteCommentsByPost(postId)
 
         # Model을 통해 게시글 삭제
-        post_model.delete_post(post_id)
+        post_model.deletePost(postId)
 
         return post
 
-# 컨트롤러 인스턴스 생성
+    def togglePostLike(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> Dict:
+        """게시글 좋아요 토글"""
+        post = post_model.getPostById(postId)
+        if not post:
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            
+        likeCount = post_model.toggleLike(postId, userId)
+        return {"likeCount": likeCount}
+
+
 post_controller = PostController()

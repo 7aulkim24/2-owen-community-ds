@@ -1,20 +1,27 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 from typing import Optional
+from .base_schema import BaseSchema
 
-class SignupRequest(BaseModel):
+class SignupRequest(BaseSchema):
     email: EmailStr
     password: str = Field(..., min_length=8)
     nickname: str = Field(..., min_length=1)
-    profile_image_url: Optional[str] = None
+    profileImageUrl: Optional[str] = None
 
-class LoginRequest(BaseModel):
+class LoginRequest(BaseSchema):
     email: EmailStr
     password: str = Field(...)
 
-class UserResponse(BaseModel):
-    user_id: str
+class UserResponse(BaseSchema):
+    userId: str
     email: EmailStr
     nickname: str
-    profile_image_url: Optional[str] = None
-    created_at: str
-    updated_at: Optional[str] = None
+    profileImageUrl: Optional[str] = None
+    createdAt: str
+    updatedAt: Optional[str] = None
+
+class EmailAvailabilityResponse(BaseSchema):
+    available: bool
+
+class NicknameAvailabilityResponse(BaseSchema):
+    available: bool
