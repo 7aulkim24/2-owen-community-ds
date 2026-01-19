@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 
-from utils.exceptions import APIException
+from utils.exceptions import APIError
 from utils.response import StandardResponse
 from utils.error_codes import ErrorCode, SuccessCode
 from utils.auth_middleware import AuthMiddleware
@@ -72,16 +72,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # 커스텀 API 예외 처리 (비즈니스 로직 오류)
-@app.exception_handler(APIException)
-async def api_exception_handler(request: Request, exc: APIException):
+@app.exception_handler(APIError)
+async def api_exception_handler(request: Request, exc: APIError):
     """
     Service에서 명시적으로 발생시킨 예외 처리
     예: 중복된 이메일, 권한 없음, 리소스 없음
     """
-    logger.info(f"API exception at {request.url}: {exc.code} - {exc.message}")
+    logger.info(f"API error at {request.url}: {exc.code}")
     return JSONResponse(
         status_code=exc.status_code,
-        content=StandardResponse.error(exc.code, exc.message, exc.details, exc.status_code)
+        content=StandardResponse.error(exc.code, exc.details)
     )
 
 # 예상치 못한 서버 오류
@@ -98,7 +98,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     
     return JSONResponse(
         status_code=500,
-        content=StandardResponse.error(ErrorCode.INTERNAL_SERVER_ERROR, None, {}, 500)
+        content=StandardResponse.error(ErrorCode.INTERNAL_SERVER_ERROR, {})
     )
 
 # 헬스 체크 엔드포인트

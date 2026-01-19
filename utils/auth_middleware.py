@@ -4,7 +4,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from models.user_model import user_model
-from utils.exceptions import UnauthorizedError
+from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -32,5 +32,5 @@ class AuthMiddleware(BaseHTTPMiddleware):
 def get_current_user(request: Request) -> Dict:
     """요청에 인증된 사용자 반환 (없으면 401)"""
     if not request.state.user:
-        raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
+        raise APIError(ErrorCode.UNAUTHORIZED)
     return request.state.user

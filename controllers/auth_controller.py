@@ -1,16 +1,10 @@
 from typing import Dict
 from fastapi import Request
 from models import user_model
-from utils.exceptions import (
-    DuplicateEmailError,
-    DuplicateNicknameError,
-    UnauthorizedError,
-    UserNotFoundError,
-    ValidationError,
-)
+from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas.auth_schema import SignupRequest, LoginRequest
-from schemas.error_schema import ValidationErrorDetail
+from schemas.error_schema import ValidationErrorDetail, FieldError, ResourceError
 
 
 class AuthController:
@@ -32,9 +26,9 @@ class AuthController:
         # Pydantic에서 이미 검증되었으므로 수동 필드 검증 제거
         
         if user_model.email_exists(req.email):
-            raise DuplicateEmailError(req.email)
+            raise APIError(ErrorCode.DUPLICATE_EMAIL, FieldError(field="email", value=req.email))
         if user_model.nickname_exists(req.nickname):
-            raise DuplicateNicknameError(req.nickname)
+            raise APIError(ErrorCode.DUPLICATE_NICKNAME, FieldError(field="nickname", value=req.nickname))
 
         user = user_model.create_user(req.email, req.password, req.nickname, req.profile_image_url)
         return self._sanitize_user(user)
@@ -45,7 +39,7 @@ class AuthController:
 
         user = user_model.authenticate_user(req.email, req.password)
         if not user:
-            raise UnauthorizedError(ErrorCode.INVALID_CREDENTIALS)
+            raise APIError(ErrorCode.INVALID_CREDENTIALS)
 
         request.session["user_id"] = user["user_id"]
         request.session["email"] = user["email"]
@@ -61,7 +55,7 @@ class AuthController:
     def get_me(self, request: Request) -> Dict:
         """내 정보 조회"""
         if not request.state.user:
-            raise UnauthorizedError(ErrorCode.UNAUTHORIZED)
+            raise APIError(ErrorCode.UNAUTHORIZED)
 
         return self._sanitize_user(request.state.user)
 

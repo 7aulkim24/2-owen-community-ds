@@ -1,7 +1,7 @@
 from typing import List, Dict, Union
 from uuid import UUID
 from models import comment_model, post_model
-from utils.exceptions import NotFoundError, ForbiddenError, ValidationError
+from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas.comment_schema import CommentCreateRequest, CommentUpdateRequest
 from schemas.error_schema import ResourceError
@@ -18,7 +18,7 @@ class CommentController:
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(post_id)))
 
         # 댓글 목록 조회
         comments = comment_model.get_comments_by_post(post_id)
@@ -29,7 +29,7 @@ class CommentController:
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(post_id)))
 
         # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
@@ -48,20 +48,20 @@ class CommentController:
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(post_id)))
 
         # 댓글 존재 여부 확인
         comment = comment_model.get_comment_by_id(comment_id)
         if not comment:
-            raise NotFoundError("댓글")
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(comment_id)))
 
         # 댓글이 해당 게시글에 속하는지 확인 (문자열로 비교)
         if str(comment["post_id"]) != str(post_id):
-            raise NotFoundError("댓글")
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(comment_id)))
 
         # 권한 확인 (작성자만 수정 가능)
         if str(comment["user_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
+            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
 
         # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
@@ -72,7 +72,7 @@ class CommentController:
         )
 
         if not updated_comment:
-            raise NotFoundError("댓글")
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(comment_id)))
 
         return updated_comment
 
@@ -81,20 +81,20 @@ class CommentController:
         # 게시글 존재 여부 확인
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise NotFoundError("게시글")
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(post_id)))
 
         # 댓글 존재 여부 확인
         comment = comment_model.get_comment_by_id(comment_id)
         if not comment:
-            raise NotFoundError("댓글")
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(comment_id)))
 
         # 댓글이 해당 게시글에 속하는지 확인
         if str(comment["post_id"]) != str(post_id):
-            raise NotFoundError("댓글")
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(comment_id)))
 
         # 권한 확인 (작성자만 삭제 가능)
         if str(comment["user_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
+            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="댓글"))
 
         # 댓글 삭제
         comment_model.delete_comment(comment_id)

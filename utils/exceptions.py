@@ -1,118 +1,36 @@
 """
 커스텀 예외 클래스 정의
-- 명시적인 에러 코드 전달
-- 매직 로직 제거
-- Enum 기반 타입 안정성
+- APIError 단일 클래스 통합
+- ErrorCode 중심의 선언적 구조
+- 에러 메시지 FE 위임
 """
 
 from typing import Union, Optional
 from pydantic import BaseModel
-from .error_codes import ErrorCode, get_error_message
-from schemas.error_schema import FieldError, ValidationErrorDetail, ResourceError
+from .error_codes import ErrorCode, get_error_status
 
 
-class APIException(Exception):
-    """모든 커스텀 예외의 기본 클래스"""
-    def __init__(self, code: ErrorCode, status_code: int, details: Union[BaseModel, dict, None] = None):
+class APIError(Exception):
+    """모든 API 에러를 처리하는 단일 예외 클래스"""
+    def __init__(
+        self, 
+        code: ErrorCode, 
+        details: Union[BaseModel, dict, None] = None,
+        status_code: Optional[int] = None
+    ):
+        """
+        Args:
+            code: ErrorCode 열거형
+            details: 에러 상세 정보 (Pydantic 모델 또는 dict)
+            status_code: HTTP 상태 코드 (기본값은 ErrorCode에 매핑된 값)
+        """
         self.code = code
-        self.message = get_error_message(code)
-        self.status_code = status_code
+        self.status_code = status_code if status_code is not None else get_error_status(code)
         
-        if isinstance(details, BaseModel):
-            self.details = details.model_dump()
-        else:
-            self.details = details or {}
-
-
-class DuplicateEmailError(APIException):
-    """409 Conflict: 이메일 중복"""
-    def __init__(self, email: str):
-        super().__init__(
-            ErrorCode.DUPLICATE_EMAIL,
-            409,
-            FieldError(field="email", value=email)
+        self.details = (
+            details.model_dump() if isinstance(details, BaseModel) 
+            else (details if details is not None else {})
         )
 
-
-class DuplicateNicknameError(APIException):
-    """409 Conflict: 닉네임 중복"""
-    def __init__(self, nickname: str):
-        super().__init__(
-            ErrorCode.DUPLICATE_NICKNAME,
-            409,
-            FieldError(field="nickname", value=nickname)
-        )
-
-
-class DuplicateEntryError(APIException):
-    """409 Conflict: 일반 중복 데이터"""
-    def __init__(self, field: str, value: str = None):
-        super().__init__(
-            ErrorCode.DUPLICATE_ENTRY, 
-            409, 
-            FieldError(field=field, value=value)
-        )
-
-
-class UnauthorizedError(APIException):
-    """401 Unauthorized: 인증 필요"""
-    def __init__(self, code: ErrorCode = ErrorCode.UNAUTHORIZED, details: Union[BaseModel, dict, None] = None):
-        super().__init__(code, 401, details)
-
-
-class ForbiddenError(APIException):
-    """403 Forbidden: 권한 없음"""
-    def __init__(self, code: ErrorCode = ErrorCode.FORBIDDEN, details: Union[BaseModel, dict, None] = None):
-        super().__init__(code, 403, details)
-
-
-class PostNotFoundError(APIException):
-    """404 Not Found: 게시글 없음"""
-    def __init__(self, post_id: str = None):
-        super().__init__(
-            ErrorCode.POST_NOT_FOUND, 
-            404, 
-            ResourceError(resource="게시글", id=post_id)
-        )
-
-
-class CommentNotFoundError(APIException):
-    """404 Not Found: 댓글 없음"""
-    def __init__(self, comment_id: str = None):
-        super().__init__(
-            ErrorCode.COMMENT_NOT_FOUND, 
-            404, 
-            ResourceError(resource="댓글", id=comment_id)
-        )
-
-
-class UserNotFoundError(APIException):
-    """404 Not Found: 사용자 없음"""
-    def __init__(self, user_id: str = None):
-        super().__init__(
-            ErrorCode.USER_NOT_FOUND, 
-            404, 
-            ResourceError(resource="사용자", id=user_id)
-        )
-
-
-class NotFoundError(APIException):
-    """404 Not Found: 일반 리소스 없음"""
-    def __init__(self, resource: str):
-        super().__init__(ErrorCode.NOT_FOUND, 404, ResourceError(resource=resource))
-
-
-class ValidationError(APIException):
-    """422 Unprocessable Entity: 유효성 검증 실패"""
-    def __init__(self, code: ErrorCode = ErrorCode.VALIDATION_ERROR, details: Union[BaseModel, dict, None] = None):
-        super().__init__(code, 422, details)
-
-
-class InvalidFormatError(APIException):
-    """422 Unprocessable Entity: 형식 오류"""
-    def __init__(self, field: str, reason: str):
-        super().__init__(
-            ErrorCode.INVALID_FORMAT, 
-            422, 
-            ValidationErrorDetail(field=field, reason=reason)
-        )
+    def __str__(self):
+        return f"[{self.code}] {self.status_code}: {self.details}"

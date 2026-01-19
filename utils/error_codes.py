@@ -74,36 +74,36 @@ class SuccessCode(str, Enum):
     SIGNUP_SUCCESS = "SIGNUP_SUCCESS"
 
 
-# 에러 메시지 매핑
-ERROR_MESSAGES = {
-    ErrorCode.INVALID_INPUT: "입력 데이터가 올바르지 않습니다.",
-    ErrorCode.MISSING_FIELD: "필수 입력 항목이 누락되었습니다.",
-    ErrorCode.INVALID_FORMAT: "입력 형식이 올바르지 않습니다.",
+# 에러 상태 코드 매핑
+ERROR_STATUS_MAP = {
+    ErrorCode.INVALID_INPUT: 400,
+    ErrorCode.MISSING_FIELD: 400,
+    ErrorCode.INVALID_FORMAT: 400,
     
-    ErrorCode.UNAUTHORIZED: "인증이 필요한 서비스입니다.",
-    ErrorCode.INVALID_CREDENTIALS: "이메일 또는 비밀번호가 일치하지 않습니다.",
-    ErrorCode.SESSION_EXPIRED: "로그인 세션이 만료되었습니다.",
-    ErrorCode.INVALID_SESSION: "유효하지 않은 세션입니다.",
+    ErrorCode.UNAUTHORIZED: 401,
+    ErrorCode.INVALID_CREDENTIALS: 401,
+    ErrorCode.SESSION_EXPIRED: 401,
+    ErrorCode.INVALID_SESSION: 401,
     
-    ErrorCode.FORBIDDEN: "해당 작업을 수행할 권한이 없습니다.",
-    ErrorCode.NOT_OWNER: "작성자만 수정/삭제할 수 있습니다.",
+    ErrorCode.FORBIDDEN: 403,
+    ErrorCode.NOT_OWNER: 403,
     
-    ErrorCode.NOT_FOUND: "요청하신 리소스를 찾을 수 없습니다.",
-    ErrorCode.POST_NOT_FOUND: "요청하신 게시글을 찾을 수 없습니다.",
-    ErrorCode.COMMENT_NOT_FOUND: "해당 댓글이 존재하지 않습니다.",
-    ErrorCode.USER_NOT_FOUND: "사용자 정보를 찾을 수 없습니다.",
+    ErrorCode.NOT_FOUND: 404,
+    ErrorCode.POST_NOT_FOUND: 404,
+    ErrorCode.COMMENT_NOT_FOUND: 404,
+    ErrorCode.USER_NOT_FOUND: 404,
     
-    ErrorCode.DUPLICATE_ENTRY: "이미 존재하는 데이터입니다.",
-    ErrorCode.DUPLICATE_EMAIL: "이미 사용 중인 이메일입니다.",
-    ErrorCode.DUPLICATE_NICKNAME: "이미 사용 중인 닉네임입니다.",
+    ErrorCode.DUPLICATE_ENTRY: 409,
+    ErrorCode.DUPLICATE_EMAIL: 409,
+    ErrorCode.DUPLICATE_NICKNAME: 409,
     
-    ErrorCode.VALIDATION_ERROR: "입력 데이터 검증에 실패했습니다.",
-    ErrorCode.EMPTY_CONTENT: "내용을 입력해주세요.",
-    ErrorCode.TITLE_TOO_SHORT: "제목은 최소 1자 이상이어야 합니다.",
-    ErrorCode.TITLE_TOO_LONG: "제목은 최대 100자까지 입력 가능합니다.",
-    ErrorCode.PASSWORD_TOO_SHORT: "비밀번호는 최소 8자 이상이어야 합니다.",
+    ErrorCode.VALIDATION_ERROR: 422,
+    ErrorCode.EMPTY_CONTENT: 422,
+    ErrorCode.TITLE_TOO_SHORT: 422,
+    ErrorCode.TITLE_TOO_LONG: 422,
+    ErrorCode.PASSWORD_TOO_SHORT: 422,
     
-    ErrorCode.INTERNAL_SERVER_ERROR: "서버에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    ErrorCode.INTERNAL_SERVER_ERROR: 500,
 }
 
 # 성공 메시지 매핑
@@ -128,17 +128,17 @@ SUCCESS_MESSAGES = {
 }
 
 
-def get_error_message(code: ErrorCode) -> str:
+def get_error_status(code: ErrorCode) -> int:
     """
-    에러 코드에 해당하는 메시지 반환
+    에러 코드에 해당하는 HTTP 상태 코드 반환
     
     Args:
         code: ErrorCode 열거형
         
     Returns:
-        에러 메시지 문자열
+        HTTP 상태 코드 (기본값 400)
     """
-    return ERROR_MESSAGES.get(code, "알 수 없는 오류가 발생했습니다.")
+    return ERROR_STATUS_MAP.get(code, 400)
 
 
 def get_success_message(code: SuccessCode) -> str:

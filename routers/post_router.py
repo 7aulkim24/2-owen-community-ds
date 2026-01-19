@@ -1,15 +1,16 @@
 from fastapi import APIRouter, Depends, status
-from typing import Dict
+from typing import Dict, List
 from uuid import UUID
 from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.post_controller import post_controller
-from schemas.post_schema import PostCreateRequest, PostUpdateRequest
+from schemas.post_schema import PostCreateRequest, PostUpdateRequest, PostResponse
+from schemas.base_schema import StandardResponse as StandardResponseSchema
 from utils.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/v1/posts", tags=["게시글"])
 
-@router.get("", response_model=None, status_code=status.HTTP_200_OK)
+@router.get("", response_model=StandardResponseSchema[List[PostResponse]], status_code=status.HTTP_200_OK)
 async def get_posts():
     """
     게시글 목록 조회
@@ -19,7 +20,7 @@ async def get_posts():
     data = post_controller.get_all_posts()
     return StandardResponse.success(SuccessCode.GET_POSTS_SUCCESS, data)
 
-@router.get("/{post_id}", response_model=None, status_code=status.HTTP_200_OK)
+@router.get("/{post_id}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
 async def get_post(post_id: UUID):
     """
     게시글 상세 조회
@@ -29,7 +30,7 @@ async def get_post(post_id: UUID):
     data = post_controller.get_post_by_id(post_id)
     return StandardResponse.success(SuccessCode.GET_POST_SUCCESS, data)
 
-@router.post("", response_model=None, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_201_CREATED)
 async def create_post(req: PostCreateRequest, user: Dict = Depends(get_current_user)):
     """
     게시글 생성
@@ -37,9 +38,9 @@ async def create_post(req: PostCreateRequest, user: Dict = Depends(get_current_u
     - title, content 필수
     """
     data = post_controller.create_post(req, user)
-    return StandardResponse.success(SuccessCode.POST_CREATED, data, 201)
+    return StandardResponse.success(SuccessCode.POST_CREATED, data)
 
-@router.patch("/{post_id}", response_model=None, status_code=status.HTTP_200_OK)
+@router.patch("/{post_id}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
 async def update_post(post_id: UUID, req: PostUpdateRequest, user: Dict = Depends(get_current_user)):
     """
     게시글 수정
@@ -49,7 +50,7 @@ async def update_post(post_id: UUID, req: PostUpdateRequest, user: Dict = Depend
     data = post_controller.update_post(post_id, req, user)
     return StandardResponse.success(SuccessCode.POST_UPDATED, data)
 
-@router.delete("/{post_id}", response_model=None, status_code=status.HTTP_200_OK)
+@router.delete("/{post_id}", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
 async def delete_post(post_id: UUID, user: Dict = Depends(get_current_user)):
     """
     게시글 삭제
@@ -58,5 +59,5 @@ async def delete_post(post_id: UUID, user: Dict = Depends(get_current_user)):
     deleted_post = post_controller.delete_post(post_id, user)
     return StandardResponse.success(
         SuccessCode.POST_DELETED, 
-        {"post_id": deleted_post["post_id"], "message": "게시글이 삭제되었습니다"}
+        {"post_id": str(deleted_post["post_id"]), "message": "게시글이 삭제되었습니다"}
     )

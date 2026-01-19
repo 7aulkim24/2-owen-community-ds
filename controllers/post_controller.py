@@ -2,7 +2,7 @@ from typing import List, Dict, Union
 from datetime import datetime
 from uuid import UUID
 from models import post_model
-from utils.exceptions import PostNotFoundError, ForbiddenError, ValidationError
+from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas.post_schema import PostCreateRequest, PostUpdateRequest
 from schemas.error_schema import ResourceError, ValidationErrorDetail
@@ -22,7 +22,10 @@ class PostController:
         """게시글 상세 조회 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise PostNotFoundError(str(post_id))
+            raise APIError(
+                ErrorCode.POST_NOT_FOUND, 
+                ResourceError(resource="게시글", id=str(post_id))
+            )
 
         # 조회수 증가
         post_model.increment_view_count(post_id)
@@ -47,11 +50,14 @@ class PostController:
         """게시글 수정 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise PostNotFoundError(str(post_id))
+            raise APIError(
+                ErrorCode.POST_NOT_FOUND, 
+                ResourceError(resource="게시글", id=str(post_id))
+            )
 
         # 권한 확인 (작성자 확인)
         if str(post["author_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
+            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
 
         # Pydantic에서 이미 검증되었으므로 수동 검증 제거
 
@@ -68,11 +74,14 @@ class PostController:
         """게시글 삭제 로직"""
         post = post_model.get_post_by_id(post_id)
         if not post:
-            raise PostNotFoundError(str(post_id))
+            raise APIError(
+                ErrorCode.POST_NOT_FOUND, 
+                ResourceError(resource="게시글", id=str(post_id))
+            )
 
         # 권한 확인
         if str(post["author_id"]) != str(user["user_id"]):
-            raise ForbiddenError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
+            raise APIError(ErrorCode.NOT_OWNER, ResourceError(resource="게시글"))
 
         # 게시글 삭제 시 관련 댓글들도 함께 삭제
         from models import comment_model
