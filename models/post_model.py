@@ -41,7 +41,7 @@ class PostModel:
         self.likesDb[postId] = set()
         return postData.copy()
 
-    def getPosts(self, limit: int = 10, offset: int = 0) -> List[Dict]:
+    def getPosts(self, limit: int = 10, offset: int = 0) -> Dict[str, Union[List[Dict], int]]:
         """게시글 목록 조회 (페이징 지원)"""
         # 최신순 정렬
         postsList = sorted(
@@ -50,10 +50,15 @@ class PostModel:
             reverse=True
         )
 
+        totalCount = len(postsList)
+
         # 페이징 적용
         startIdx = offset
         endIdx = offset + limit
-        return postsList[startIdx:endIdx]
+        return {
+            "posts": postsList[startIdx:endIdx],
+            "totalCount": totalCount
+        }
 
     def getPostById(self, postId: Union[UUID, str]) -> Optional[Dict]:
         """게시글 ID로 조회"""

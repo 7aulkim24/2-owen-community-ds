@@ -8,6 +8,7 @@ from schemas.auth_schema import UserResponse
 from schemas.user_schema import UserUpdateRequest, PasswordChangeRequest, UserProfileImageResponse
 from schemas.base_schema import StandardResponse as StandardResponseSchema
 from utils.auth_middleware import get_current_user
+from utils.file_utils import save_upload_file
 
 router = APIRouter(prefix="/v1/users", tags=["사용자"])
 
@@ -70,6 +71,5 @@ async def delete_user_account(userId: UUID, request: Request, user: Dict = Depen
 @router.post("/me/profile-image", response_model=StandardResponseSchema[UserProfileImageResponse], status_code=status.HTTP_201_CREATED)
 async def upload_profile_image(profileImage: UploadFile = File(...), user: Dict = Depends(get_current_user)):
     """프로필 이미지 업로드"""
-    # Mock URL 반환
-    fileUrl = f"http://localhost:8000/public/image/profile/{profileImage.filename}"
+    fileUrl = save_upload_file(profileImage, "profile")
     return StandardResponse.success(SuccessCode.PROFILE_IMAGE_UPLOADED, {"profileImageUrl": fileUrl})

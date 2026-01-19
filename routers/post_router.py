@@ -5,18 +5,19 @@ from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.post_controller import post_controller
 from schemas.post_schema import PostCreateRequest, PostUpdateRequest, PostResponse, PostImageUploadResponse
-from schemas.base_schema import StandardResponse as StandardResponseSchema
+from schemas.base_schema import StandardResponse as StandardResponseSchema, PaginatedResponse as PaginatedResponseSchema
 from utils.auth_middleware import get_current_user
+from utils.file_utils import save_upload_file
 
 router = APIRouter(prefix="/v1/posts", tags=["게시글"])
 
-@router.get("", response_model=StandardResponseSchema[List[PostResponse]], status_code=status.HTTP_200_OK)
+@router.get("", response_model=PaginatedResponseSchema[List[PostResponse]], status_code=status.HTTP_200_OK)
 async def get_posts(
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100)
 ):
     """
-    게시글 목록 조회
+    게시글 목록 조회 (페이징 메타데이터 포함)
     - 모든 게시글을 최신순으로 반환
     - 인증 불필요
     """
@@ -67,10 +68,9 @@ async def delete_post(postId: UUID, user: Dict = Depends(get_current_user)):
 async def upload_post_image(postFile: UploadFile = File(...), user: Dict = Depends(get_current_user)):
     """
     게시글 이미지 업로드
-    - 실무 역량 강화를 위해 Mock으로 구현 (추후 S3 연동 가능)
+    - 실제 로컬 폴더에 이미지 저장 및 URL 반환
     """
-    # 임시 URL 반환
-    fileUrl = f"http://localhost:8000/public/image/post/{postFile.filename}"
+    fileUrl = save_upload_file(postFile, "post")
     return StandardResponse.success(SuccessCode.POST_FILE_UPLOADED, {"postFileUrl": fileUrl})
 
 @router.post("/{postId}/likes", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_201_CREATED)

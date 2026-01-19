@@ -43,10 +43,30 @@ class PostController:
             
         return formatted
 
-    def getAllPosts(self, limit: int = 10, offset: int = 0) -> List[Dict]:
-        """게시글 목록 조회 로직"""
-        postsData = post_model.getPosts(limit=limit, offset=offset)
-        return [self._formatPost(post) for post in postsData]
+    def getAllPosts(self, limit: int = 10, offset: int = 0) -> Dict:
+        """게시글 목록 조회 로직 (페이징 메타데이터 포함)"""
+        result = post_model.getPosts(limit=limit, offset=offset)
+        postsData = result["posts"]
+        totalCount = result["totalCount"]
+
+        formattedPosts = [self._formatPost(post) for post in postsData]
+        
+        # 페이징 메타데이터 계산
+        totalPage = (totalCount + limit - 1) // limit if totalCount > 0 else 0
+        currentPage = (offset // limit) + 1
+        hasNext = offset + limit < totalCount
+
+        return {
+            "items": formattedPosts,
+            "pagination": {
+                "totalCount": totalCount,
+                "limit": limit,
+                "offset": offset,
+                "currentPage": currentPage,
+                "totalPage": totalPage,
+                "hasNext": hasNext
+            }
+        }
 
     def getPostById(self, postId: Union[UUID, str]) -> Dict:
         """게시글 상세 조회 로직"""

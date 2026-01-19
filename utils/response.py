@@ -1,10 +1,10 @@
 """
 표준 API 응답 포맷
 - Enum 기반 코드 사용
-- 타입 안정성 확보
+- 계층적 에러 구조 지원
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from .error_codes import ErrorCode, SuccessCode, get_success_message
 
 
@@ -16,16 +16,19 @@ class StandardResponse:
         """성공 응답 생성"""
         return {
             "code": code.value,
+            "category": "SUCCESS",
             "message": get_success_message(code),
             "data": data if data is not None else {}
         }
 
     @staticmethod
-    def error(code: ErrorCode, details: Dict = None) -> Dict:
+    def error(code: ErrorCode, details: Any = None, message: Optional[str] = None) -> Dict:
         """에러 응답 생성"""
         return {
-            "code": code.value,
-            "data": details if details is not None else None # 설계도 규격(data 필드 사용) 준수
+            "code": code.name,
+            "category": code.category,
+            "message": message if message else code.default_message,
+            "data": details if details is not None else None
         }
 
     @staticmethod
@@ -55,6 +58,8 @@ class StandardResponse:
                 field_details[field_name].append(tag)
                 
         return {
-            "code": ErrorCode.INVALID_INPUT.value,
+            "code": ErrorCode.INVALID_INPUT.name,
+            "category": ErrorCode.INVALID_INPUT.category,
+            "message": ErrorCode.INVALID_INPUT.default_message,
             "data": field_details
         }

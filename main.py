@@ -6,7 +6,9 @@ FastAPI 애플리케이션 메인 파일
 """
 
 import logging
+import os
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +32,15 @@ app = FastAPI(
     description="FastAPI 기반 커뮤니티 백엔드 API",
     version="1.0.0"
 )
+
+# 정적 파일 서빙 (이미지 업로드 등)
+UPLOAD_DIR = "public"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+    os.makedirs(os.path.join(UPLOAD_DIR, "image/post"))
+    os.makedirs(os.path.join(UPLOAD_DIR, "image/profile"))
+
+app.mount("/public", StaticFiles(directory=UPLOAD_DIR), name="public")
 
 # 인증 미들웨어 등록 (세션 미들웨어보다 먼저 등록되어야 함을 주의 - FastAPI는 거꾸로 실행됨)
 app.add_middleware(AuthMiddleware)
@@ -77,10 +88,10 @@ async def api_exception_handler(request: Request, exc: APIError):
     Service에서 명시적으로 발생시킨 예외 처리
     예: 중복된 이메일, 권한 없음, 리소스 없음
     """
-    logger.info(f"API error at {request.url}: {exc.code}")
+    logger.info(f"API error at {request.url}: {exc.code.name}")
     return JSONResponse(
         status_code=exc.status_code,
-        content=StandardResponse.error(exc.code, exc.details)
+        content=StandardResponse.error(exc.code, exc.details, exc.message)
     )
 
 # 예상치 못한 서버 오류
