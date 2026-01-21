@@ -13,7 +13,6 @@ class BaseSchema(BaseModel):
 class StandardResponse(BaseSchema, Generic[T]):
     """모든 API 응답의 표준 Pydantic 모델"""
     code: str
-    category: Optional[str] = None
     message: str
     data: Optional[T] = None
     details: Optional[Dict[str, Any]] = None

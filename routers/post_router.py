@@ -22,7 +22,7 @@ async def get_posts(
     - 인증 불필요
     """
     data = post_controller.getAllPosts(limit=limit, offset=offset)
-    return StandardResponse.success(SuccessCode.POSTS_RETRIEVED, data)
+    return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 @router.get("/{postId}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
 async def get_post(postId: UUID):
@@ -32,7 +32,7 @@ async def get_post(postId: UUID):
     - 인증 불필요
     """
     data = post_controller.getPostById(postId)
-    return StandardResponse.success(SuccessCode.POST_RETRIEVED, data)
+    return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 @router.post("", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_201_CREATED)
 async def create_post(req: PostCreateRequest, user: Dict = Depends(get_current_user)):
@@ -41,7 +41,7 @@ async def create_post(req: PostCreateRequest, user: Dict = Depends(get_current_u
     - 인증된 사용자만 작성 가능
     """
     data = post_controller.createPost(req, user)
-    return StandardResponse.success(SuccessCode.POST_CREATED, data)
+    return StandardResponse.success(SuccessCode.CREATED, data)
 
 @router.patch("/{postId}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
 async def update_post(postId: UUID, req: PostUpdateRequest, user: Dict = Depends(get_current_user)):
@@ -50,7 +50,7 @@ async def update_post(postId: UUID, req: PostUpdateRequest, user: Dict = Depends
     - 작성자만 수정 가능
     """
     data = post_controller.updatePost(postId, req, user)
-    return StandardResponse.success(SuccessCode.POST_UPDATED, data)
+    return StandardResponse.success(SuccessCode.UPDATED, data)
 
 @router.delete("/{postId}", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
 async def delete_post(postId: UUID, user: Dict = Depends(get_current_user)):
@@ -60,7 +60,7 @@ async def delete_post(postId: UUID, user: Dict = Depends(get_current_user)):
     """
     deletedPost = post_controller.deletePost(postId, user)
     return StandardResponse.success(
-        SuccessCode.POST_DELETED, 
+        SuccessCode.DELETED, 
         {"postId": str(deletedPost["postId"]), "message": "게시글이 삭제되었습니다"}
     )
 
@@ -71,7 +71,7 @@ async def upload_post_image(postFile: UploadFile = File(...), user: Dict = Depen
     - 실제 로컬 폴더에 이미지 저장 및 URL 반환
     """
     fileUrl = save_upload_file(postFile, "post")
-    return StandardResponse.success(SuccessCode.POST_FILE_UPLOADED, {"postFileUrl": fileUrl})
+    return StandardResponse.success(SuccessCode.UPDATED, {"postFileUrl": fileUrl})
 
 @router.post("/{postId}/likes", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_201_CREATED)
 async def toggle_post_like(postId: UUID, user: Dict = Depends(get_current_user)):
@@ -79,4 +79,4 @@ async def toggle_post_like(postId: UUID, user: Dict = Depends(get_current_user))
     게시글 좋아요 토글
     """
     data = post_controller.togglePostLike(postId, user["userId"])
-    return StandardResponse.success(SuccessCode.POST_LIKE_UPDATED, data)
+    return StandardResponse.success(SuccessCode.UPDATED, data)

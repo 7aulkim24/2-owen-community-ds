@@ -115,7 +115,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 async def health_check():
     """서버 상태 확인"""
-    return StandardResponse.success(SuccessCode.HEALTH_CHECK_OK, {"status": "healthy"})
+    return StandardResponse.success(SuccessCode.SUCCESS, {"status": "healthy"})
 
 # 라우터 등록
 from routers import post_router, comment_router, auth_router, user_router

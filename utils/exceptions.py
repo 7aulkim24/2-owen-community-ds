@@ -20,13 +20,12 @@ class APIError(Exception):
     ):
         """
         Args:
-            code: ErrorCode 열거형 (Category, StatusCode, Message 포함)
+            code: ErrorCode 열거형 (StatusCode, Message 포함)
             details: 에러 상세 정보 (Pydantic 모델 또는 dict)
             message: 커스텀 에러 메시지 (지정하지 않으면 ErrorCode의 기본 메시지 사용)
             status_code: HTTP 상태 코드 (지정하지 않으면 ErrorCode의 기본 상태 코드 사용)
         """
         self.code = code
-        self.category = code.category
         self.status_code = status_code if status_code is not None else code.status_code
         self.message = message if message is not None else code.default_message
         
@@ -36,4 +35,4 @@ class APIError(Exception):
         )
 
     def __str__(self):
-        return f"[{self.code.name}] {self.status_code}: {self.message} (Category: {self.category})"
+        return f"[{self.code.name}] {self.status_code}: {self.message}"

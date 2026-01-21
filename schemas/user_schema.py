@@ -11,3 +11,11 @@ class PasswordChangeRequest(BaseSchema):
 
 class UserProfileImageResponse(BaseSchema):
     profileImageUrl: str
+
+class UserResponse(BaseSchema):
+    userId: str
+    email: str
+    nickname: str
+    profileImageUrl: Optional[str] = None
+    createdAt: str
+    updatedAt: Optional[str] = None

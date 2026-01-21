@@ -15,8 +15,7 @@ class StandardResponse:
     def success(code: SuccessCode, data: Any = None) -> Dict:
         """성공 응답 생성"""
         return {
-            "code": code.value,
-            "category": "SUCCESS",
+            "code": code.name,
             "message": get_success_message(code),
             "data": data if data is not None else {}
         }
@@ -26,9 +25,8 @@ class StandardResponse:
         """에러 응답 생성"""
         return {
             "code": code.name,
-            "category": code.category,
             "message": message if message else code.default_message,
-            "data": details if details is not None else None
+            "details": details if details is not None else {}
         }
 
     @staticmethod
@@ -59,7 +57,6 @@ class StandardResponse:
                 
         return {
             "code": ErrorCode.INVALID_INPUT.name,
-            "category": ErrorCode.INVALID_INPUT.category,
             "message": ErrorCode.INVALID_INPUT.default_message,
-            "data": field_details
+            "details": field_details
         }
