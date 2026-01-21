@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Union
 from datetime import datetime
-from uuid import UUID, uuid4
+from utils.id_utils import generate_id
 
 
 class PostModel:
@@ -12,15 +12,15 @@ class PostModel:
         # 좋아요 기록 저장소 {postId: {userId1, userId2, ...}}
         self.likesDb: Dict[str, set] = {}
 
-    def _normalizeId(self, idVal: Union[UUID, str]) -> str:
-        """UUID 객체 또는 문자열을 문자열 형식의 UUID로 정규화"""
+    def _normalizeId(self, idVal: Union[str, any]) -> str:
+        """ID 정규화 (문자열로 변환)"""
         return str(idVal)
 
     def getNextPostId(self) -> str:
-        """다음 게시글 ID 생성 (문자열로 반환)"""
-        return str(uuid4())
+        """다음 게시글 ID 생성 (ULID)"""
+        return generate_id()
 
-    def createPost(self, title: str, content: str, authorId: Union[UUID, str], authorNickname: str, fileUrl: Optional[str] = None) -> Dict:
+    def createPost(self, title: str, content: str, authorId: Union[str, any], authorNickname: str, fileUrl: Optional[str] = None) -> Dict:
         """게시글 생성"""
         postId = self.getNextPostId()
         authorIdStr = self._normalizeId(authorId)
@@ -34,7 +34,9 @@ class PostModel:
             "fileUrl": fileUrl,
             "createdAt": datetime.now().isoformat(),
             "updatedAt": None,
-            "hits": 0
+            "hits": 0,
+            "likeCount": 0,
+            "commentCount": 0
         }
 
         self.postsDb[postId] = postData
@@ -60,12 +62,12 @@ class PostModel:
             "totalCount": totalCount
         }
 
-    def getPostById(self, postId: Union[UUID, str]) -> Optional[Dict]:
+    def getPostById(self, postId: Union[str, any]) -> Optional[Dict]:
         """게시글 ID로 조회"""
         postIdStr = self._normalizeId(postId)
         return self.postsDb.get(postIdStr)
 
-    def incrementViewCount(self, postId: Union[UUID, str]) -> bool:
+    def incrementViewCount(self, postId: Union[str, any]) -> bool:
         """조회수 증가"""
         postIdStr = self._normalizeId(postId)
         if postIdStr in self.postsDb:
@@ -73,7 +75,7 @@ class PostModel:
             return True
         return False
 
-    def updatePost(self, postId: Union[UUID, str], title: str, content: str, fileUrl: Optional[str] = None) -> Optional[Dict]:
+    def updatePost(self, postId: Union[str, any], title: str, content: str, fileUrl: Optional[str] = None) -> Optional[Dict]:
         """게시글 수정"""
         postIdStr = self._normalizeId(postId)
         if postIdStr not in self.postsDb:
@@ -88,7 +90,7 @@ class PostModel:
 
         return post.copy()
 
-    def deletePost(self, postId: Union[UUID, str]) -> bool:
+    def deletePost(self, postId: Union[str, any]) -> bool:
         """게시글 삭제"""
         postIdStr = self._normalizeId(postId)
         if postIdStr in self.postsDb:
@@ -102,8 +104,8 @@ class PostModel:
         """전체 게시글 수 조회"""
         return len(self.postsDb)
 
-    def toggleLike(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> int:
-        """좋아요 토글 (실무 역량을 위해 토글 방식 구현)"""
+    def toggleLike(self, postId: Union[str, any], userId: Union[str, any]) -> int:
+        """좋아요 토글"""
         postIdStr = self._normalizeId(postId)
         userIdStr = self._normalizeId(userId)
         
@@ -115,14 +117,27 @@ class PostModel:
         else:
             self.likesDb[postIdStr].add(userIdStr)
             
-        return len(self.likesDb[postIdStr])
+        # 캐시된 카운트 업데이트
+        count = len(self.likesDb[postIdStr])
+        if postIdStr in self.postsDb:
+            self.postsDb[postIdStr]["likeCount"] = count
+            
+        return count
 
-    def getLikeCount(self, postId: Union[UUID, str]) -> int:
+    def updateCommentCount(self, postId: Union[str, any], delta: int) -> int:
+        """댓글 수 업데이트 (캐시)"""
+        postIdStr = self._normalizeId(postId)
+        if postIdStr in self.postsDb:
+            self.postsDb[postIdStr]["commentCount"] += delta
+            return self.postsDb[postIdStr]["commentCount"]
+        return 0
+
+    def getLikeCount(self, postId: Union[str, any]) -> int:
         """좋아요 수 조회"""
         postIdStr = self._normalizeId(postId)
         return len(self.likesDb.get(postIdStr, set()))
 
-    def isLikedByUser(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> bool:
+    def isLikedByUser(self, postId: Union[str, any], userId: Union[str, any]) -> bool:
         """특정 사용자의 좋아요 여부"""
         postIdStr = self._normalizeId(postId)
         userIdStr = self._normalizeId(userId)

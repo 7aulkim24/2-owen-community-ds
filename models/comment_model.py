@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Union
 from datetime import datetime
-from uuid import UUID, uuid4
+from utils.id_utils import generate_id
 
 
 class CommentModel:
@@ -10,15 +10,15 @@ class CommentModel:
         # 메모리 기반 댓글 저장소 (Key를 문자열로 관리)
         self.commentsDb: Dict[str, Dict] = {}
 
-    def _normalizeId(self, idVal: Union[UUID, str]) -> str:
-        """ID 정규화 (UUID 객체 또는 문자열 -> 문자열)"""
+    def _normalizeId(self, idVal: Union[str, any]) -> str:
+        """ID 정규화 (문자열로 변환)"""
         return str(idVal)
 
     def getNextCommentId(self) -> str:
-        """다음 댓글 ID 생성"""
-        return str(uuid4())
+        """다음 댓글 ID 생성 (ULID)"""
+        return generate_id()
 
-    def createComment(self, postId: Union[UUID, str], userId: Union[UUID, str], userNickname: str, content: str) -> Dict:
+    def createComment(self, postId: Union[str, any], userId: Union[str, any], userNickname: str, content: str) -> Dict:
         """댓글 생성"""
         commentId = self.getNextCommentId()
         postIdStr = self._normalizeId(postId)
@@ -37,7 +37,7 @@ class CommentModel:
         self.commentsDb[commentId] = commentData
         return commentData.copy()
 
-    def getCommentsByPost(self, postId: Union[UUID, str]) -> List[Dict]:
+    def getCommentsByPost(self, postId: Union[str, any]) -> List[Dict]:
         """특정 게시글의 모든 댓글 조회 (최신순)"""
         postIdStr = self._normalizeId(postId)
         postComments = [
@@ -47,12 +47,12 @@ class CommentModel:
         # 최신순 정렬
         return sorted(postComments, key=lambda x: x["createdAt"], reverse=True)
 
-    def getCommentById(self, commentId: Union[UUID, str]) -> Optional[Dict]:
+    def getCommentById(self, commentId: Union[str, any]) -> Optional[Dict]:
         """ID로 댓글 조회"""
         commentIdStr = self._normalizeId(commentId)
         return self.commentsDb.get(commentIdStr)
 
-    def updateComment(self, commentId: Union[UUID, str], content: str) -> Optional[Dict]:
+    def updateComment(self, commentId: Union[str, any], content: str) -> Optional[Dict]:
         """댓글 수정"""
         commentIdStr = self._normalizeId(commentId)
         if commentIdStr not in self.commentsDb:
@@ -64,7 +64,7 @@ class CommentModel:
 
         return comment.copy()
 
-    def deleteComment(self, commentId: Union[UUID, str]) -> bool:
+    def deleteComment(self, commentId: Union[str, any]) -> bool:
         """댓글 삭제"""
         commentIdStr = self._normalizeId(commentId)
         if commentIdStr in self.commentsDb:
@@ -72,7 +72,7 @@ class CommentModel:
             return True
         return False
 
-    def getCommentsByUser(self, userId: Union[UUID, str]) -> List[Dict]:
+    def getCommentsByUser(self, userId: Union[str, any]) -> List[Dict]:
         """특정 사용자의 모든 댓글 조회"""
         userIdStr = self._normalizeId(userId)
         return [
@@ -80,7 +80,7 @@ class CommentModel:
             if comment["userId"] == userIdStr
         ]
 
-    def getCommentsCountByPost(self, postId: Union[UUID, str]) -> int:
+    def getCommentsCountByPost(self, postId: Union[str, any]) -> int:
         """특정 게시글의 댓글 수 조회"""
         postIdStr = self._normalizeId(postId)
         return len([
@@ -88,7 +88,7 @@ class CommentModel:
             if comment["postId"] == postIdStr
         ])
 
-    def deleteCommentsByPost(self, postId: Union[UUID, str]) -> int:
+    def deleteCommentsByPost(self, postId: Union[str, any]) -> int:
         """특정 게시글의 모든 댓글 삭제"""
         postIdStr = self._normalizeId(postId)
         commentsToDelete = [

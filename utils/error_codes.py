@@ -10,18 +10,19 @@ class ErrorCode(Enum):
     BAD_REQUEST = (400, "잘못된 요청입니다.")
     UNAUTHORIZED = (401, "로그인이 필요합니다.")
     FORBIDDEN = (403, "권한이 없습니다.")
-    NOT_FOUND = (404, "요청하신 리소스를 찾을 수 없습니다.")
+    NOT_FOUND = (404, "리소스를 찾을 수 없습니다.")
     METHOD_NOT_ALLOWED = (405, "허용되지 않은 메서드입니다.")
+    CONFLICT = (409, "리소스 충돌이 발생했습니다.")
     TOO_MANY_REQUEST = (429, "너무 많은 요청이 발생했습니다.")
     INTERNAL_SERVER_ERROR = (500, "서버 내부 오류가 발생했습니다.")
 
-    # --- 검증 에러 ---
+    # --- 검증 및 입력 에러 ---
     INVALID_INPUT = (422, "입력 값이 올바르지 않습니다.")
-
-    # --- 인증 및 사용자 관련 에러 ---
-    INVALID_CREDENTIALS = (401, "이메일 또는 비밀번호가 일치하지 않습니다.")
-    ALREADY_LOGIN = (409, "이미 로그인된 상태입니다.")
+    INVALID_CREDENTIALS = (401, "인증 정보가 올바르지 않습니다.")
+    
+    # --- 상태 에러 ---
     ALREADY_EXISTS = (409, "이미 존재하는 리소스입니다.")
+    ALREADY_LOGIN = (409, "이미 로그인된 상태입니다.")
 
     # --- 리소스 존재 여부 핵심 에러 ---
     USER_NOT_FOUND = (404, "사용자를 찾을 수 없습니다.")

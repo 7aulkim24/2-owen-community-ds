@@ -1,6 +1,7 @@
 from pydantic import EmailStr, Field
 from typing import Optional
 from .base_schema import BaseSchema
+from .user_schema import UserResponse
 
 class SignupRequest(BaseSchema):
     email: EmailStr
@@ -11,14 +12,6 @@ class SignupRequest(BaseSchema):
 class LoginRequest(BaseSchema):
     email: EmailStr
     password: str = Field(...)
-
-class UserResponse(BaseSchema):
-    userId: str
-    email: EmailStr
-    nickname: str
-    profileImageUrl: Optional[str] = None
-    createdAt: str
-    updatedAt: Optional[str] = None
 
 class EmailAvailabilityResponse(BaseSchema):
     available: bool

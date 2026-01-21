@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Depends, status, Request, UploadFile, File
 from typing import Dict
-from uuid import UUID
 from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.user_controller import user_controller
-from schemas.auth_schema import UserResponse
-from schemas.user_schema import UserUpdateRequest, PasswordChangeRequest, UserProfileImageResponse
-from schemas.base_schema import StandardResponse as StandardResponseSchema
+from schemas import UserResponse, UserUpdateRequest, PasswordChangeRequest, UserProfileImageResponse, StandardResponse as StandardResponseSchema
 from utils.auth_middleware import get_current_user
 from utils.file_utils import save_upload_file
 
@@ -41,28 +38,28 @@ async def delete_my_account(request: Request, user: Dict = Depends(get_current_u
 
 
 @router.get("/{userId}", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
-async def get_user_info(userId: UUID):
+async def get_user_info(userId: str):
     """특정 사용자 정보 조회"""
     data = user_controller.getUserById(userId)
     return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 
 @router.patch("/{userId}", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
-async def update_user_info(userId: UUID, req: UserUpdateRequest, user: Dict = Depends(get_current_user)):
+async def update_user_info(userId: str, req: UserUpdateRequest, user: Dict = Depends(get_current_user)):
     """특정 사용자 정보 수정 (본인만 가능)"""
     data = user_controller.updateUser(userId, req, user)
     return StandardResponse.success(SuccessCode.UPDATED, data)
 
 
 @router.patch("/{userId}/password", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
-async def change_user_password(userId: UUID, req: PasswordChangeRequest, user: Dict = Depends(get_current_user)):
+async def change_user_password(userId: str, req: PasswordChangeRequest, user: Dict = Depends(get_current_user)):
     """비밀번호 변경 (본인만 가능)"""
     user_controller.changePassword(userId, req, user)
     return StandardResponse.success(SuccessCode.UPDATED, None)
 
 
 @router.delete("/{userId}", response_model=StandardResponseSchema[Dict], status_code=status.HTTP_200_OK)
-async def delete_user_account(userId: UUID, request: Request, user: Dict = Depends(get_current_user)):
+async def delete_user_account(userId: str, request: Request, user: Dict = Depends(get_current_user)):
     """회원 탈퇴 (본인만 가능)"""
     user_controller.deleteUser(userId, user, request)
     return StandardResponse.success(SuccessCode.SUCCESS, None)

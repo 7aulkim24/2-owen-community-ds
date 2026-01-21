@@ -3,8 +3,7 @@ from typing import Dict
 from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.auth_controller import auth_controller
-from schemas.auth_schema import SignupRequest, LoginRequest, UserResponse, EmailAvailabilityResponse, NicknameAvailabilityResponse
-from schemas.base_schema import StandardResponse as StandardResponseSchema
+from schemas import SignupRequest, LoginRequest, UserResponse, EmailAvailabilityResponse, NicknameAvailabilityResponse, StandardResponse as StandardResponseSchema
 
 router = APIRouter(prefix="/v1/auth", tags=["인증"])
 

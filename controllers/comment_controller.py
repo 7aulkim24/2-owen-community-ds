@@ -1,10 +1,10 @@
 from typing import List, Dict, Union
-from uuid import UUID
-from models import comment_model, post_model, user_model
+from models.comment_model import comment_model
+from models.post_model import post_model
+from models.user_model import user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
-from schemas.comment_schema import CommentCreateRequest, CommentUpdateRequest, CommentResponse, CommentAuthor
-from schemas.error_schema import ResourceError
+from schemas import CommentCreateRequest, CommentUpdateRequest, CommentResponse, CommentAuthor, ResourceError
 
 
 class CommentController:
@@ -29,20 +29,20 @@ class CommentController:
             updatedAt=comment.get("updatedAt")
         )
 
-    def getCommentsByPost(self, postId: Union[UUID, str]) -> List[CommentResponse]:
+    def getCommentsByPost(self, postId: str) -> List[CommentResponse]:
         """특정 게시글의 댓글 목록 조회"""
         post = post_model.getPostById(postId)
         if not post:
-            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=postId))
 
         comments = comment_model.getCommentsByPost(postId)
         return [self._formatComment(c) for c in comments]
 
-    def createComment(self, postId: Union[UUID, str], req: CommentCreateRequest, user: Dict) -> CommentResponse:
+    def createComment(self, postId: str, req: CommentCreateRequest, user: Dict) -> CommentResponse:
         """댓글 작성"""
         post = post_model.getPostById(postId)
         if not post:
-            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=postId))
 
         comment_data = comment_model.createComment(
             postId=postId,
@@ -50,21 +50,24 @@ class CommentController:
             userNickname=user["nickname"],
             content=req.content
         )
+        
+        # 게시글의 댓글 수 캐시 업데이트
+        post_model.updateCommentCount(postId, 1)
 
         return self._formatComment(comment_data)
 
-    def updateComment(self, postId: Union[UUID, str], commentId: Union[UUID, str], req: CommentUpdateRequest, user: Dict) -> CommentResponse:
+    def updateComment(self, postId: str, commentId: str, req: CommentUpdateRequest, user: Dict) -> CommentResponse:
         """댓글 수정"""
         post = post_model.getPostById(postId)
         if not post:
-            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=postId))
 
         comment = comment_model.getCommentById(commentId)
         if not comment:
-            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(commentId)))
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=commentId))
 
-        if str(comment["postId"]) != str(postId):
-            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(commentId)))
+        if str(comment["postId"]) != postId:
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=commentId))
 
         if str(comment["userId"]) != str(user["userId"]):
             raise APIError(ErrorCode.FORBIDDEN, ResourceError(resource="댓글"))
@@ -76,23 +79,26 @@ class CommentController:
 
         return self._formatComment(updated_comment)
 
-    def deleteComment(self, postId: Union[UUID, str], commentId: Union[UUID, str], user: Dict) -> Dict:
+    def deleteComment(self, postId: str, commentId: str, user: Dict) -> Dict:
         """댓글 삭제"""
         post = post_model.getPostById(postId)
         if not post:
-            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=postId))
 
         comment = comment_model.getCommentById(commentId)
         if not comment:
-            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(commentId)))
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=commentId))
 
-        if str(comment["postId"]) != str(postId):
-            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=str(commentId)))
+        if str(comment["postId"]) != postId:
+            raise APIError(ErrorCode.COMMENT_NOT_FOUND, ResourceError(resource="댓글", id=commentId))
 
         if str(comment["userId"]) != str(user["userId"]):
             raise APIError(ErrorCode.FORBIDDEN, ResourceError(resource="댓글"))
 
         comment_model.deleteComment(commentId)
+        
+        # 게시글의 댓글 수 캐시 업데이트
+        post_model.updateCommentCount(postId, -1)
 
         return comment
 

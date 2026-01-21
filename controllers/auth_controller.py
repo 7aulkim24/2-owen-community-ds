@@ -1,11 +1,9 @@
 from typing import Dict
 from fastapi import Request
-from models import user_model
+from models.user_model import user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
-from schemas.auth_schema import SignupRequest, LoginRequest
-from schemas.user_schema import UserResponse
-from schemas.error_schema import FieldError
+from schemas import SignupRequest, LoginRequest, UserResponse, FieldError
 
 
 class AuthController:
@@ -40,10 +38,15 @@ class AuthController:
 
     def getMe(self, request: Request) -> UserResponse:
         """내 정보 조회"""
-        if not hasattr(request.state, "user") or not request.state.user:
+        user_id = getattr(request.state, "user_id", None)
+        if not user_id:
             raise APIError(ErrorCode.UNAUTHORIZED)
 
-        return UserResponse.model_validate(request.state.user)
+        user = user_model.getUserById(user_id)
+        if not user:
+            raise APIError(ErrorCode.UNAUTHORIZED)
+
+        return UserResponse.model_validate(user)
 
     def checkEmailAvailability(self, email: str) -> Dict:
         """이메일 중복 확인"""

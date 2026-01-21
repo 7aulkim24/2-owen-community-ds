@@ -20,10 +20,10 @@ class APIError(Exception):
     ):
         """
         Args:
-            code: ErrorCode 열거형 (StatusCode, Message 포함)
-            details: 에러 상세 정보 (Pydantic 모델 또는 dict)
-            message: 커스텀 에러 메시지 (지정하지 않으면 ErrorCode의 기본 메시지 사용)
-            status_code: HTTP 상태 코드 (지정하지 않으면 ErrorCode의 기본 상태 코드 사용)
+            code: ErrorCode 열거형
+            details: 에러 상세 정보 (FE에서 UI 반영 시 사용)
+            message: 개발자 참고용 메시지 (FE 메시지 관리의 폴백)
+            status_code: HTTP 상태 코드
         """
         self.code = code
         self.status_code = status_code if status_code is not None else code.status_code

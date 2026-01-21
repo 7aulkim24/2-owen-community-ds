@@ -1,23 +1,28 @@
 from typing import List, Dict, Union, Optional
-from uuid import UUID
-from models import post_model, comment_model, user_model
+from models.post_model import post_model
+from models.comment_model import comment_model
+from models.user_model import user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
-from schemas.post_schema import PostCreateRequest, PostUpdateRequest, PostResponse, PostAuthor, PostFile
-from schemas.base_schema import PaginatedData, PaginationMeta
-from schemas.error_schema import ResourceError
+from schemas import PostCreateRequest, PostUpdateRequest, PostResponse, PostAuthor, PostFile, PaginatedData, PaginationMeta, ResourceError
 
 
 class PostController:
     """게시글 관련 비즈니스 로직"""
 
-    def _formatPost(self, post: Dict) -> PostResponse:
+    def _formatPost(self, post: Dict, user_cache: Optional[Dict[str, Dict]] = None) -> PostResponse:
         """Post 데이터를 API 응답 규격에 맞게 변환"""
-        author = user_model.getUserById(post["authorId"])
+        author_id = post["authorId"]
+        
+        # 캐시가 제공되면 캐시에서 조회, 없으면 모델에서 직접 조회
+        if user_cache is not None and author_id in user_cache:
+            author = user_cache[author_id]
+        else:
+            author = user_model.getUserById(author_id)
         
         # author 정보가 없으면 (탈퇴 등) 기본값 처리
         author_data = PostAuthor(
-            userId=post["authorId"],
+            userId=author_id,
             nickname=post["authorNickname"],
             profileImageUrl=author.get("profileImageUrl") if author else None
         )
@@ -33,8 +38,8 @@ class PostController:
             postId=post["postId"],
             title=post["title"],
             content=post["content"],
-            likeCount=post_model.getLikeCount(post["postId"]),
-            commentCount=comment_model.getCommentsCountByPost(post["postId"]),
+            likeCount=post.get("likeCount", 0), # 캐시된 값 사용
+            commentCount=post.get("commentCount", 0), # 캐시된 값 사용
             hits=post["hits"],
             author=author_data,
             file=post_file,
@@ -48,7 +53,13 @@ class PostController:
         posts_data = result["posts"]
         total_count = result["totalCount"]
 
-        formatted_posts = [self._formatPost(post) for post in posts_data]
+        # 중복 사용자 조회 최적화를 위한 캐싱
+        author_ids = {post["authorId"] for post in posts_data}
+        user_cache = {}
+        for aid in author_ids:
+            user_cache[aid] = user_model.getUserById(aid)
+
+        formatted_posts = [self._formatPost(post, user_cache) for post in posts_data]
         
         # 페이징 메타데이터 계산
         total_page = (total_count + limit - 1) // limit if total_count > 0 else 0
@@ -67,13 +78,13 @@ class PostController:
             )
         )
 
-    def getPostById(self, postId: Union[UUID, str]) -> PostResponse:
+    def getPostById(self, postId: str) -> PostResponse:
         """게시글 상세 조회 로직"""
         post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(postId))
+                ResourceError(resource="게시글", id=postId)
             )
 
         # 조회수 증가
@@ -95,13 +106,13 @@ class PostController:
 
         return self._formatPost(post_data)
 
-    def updatePost(self, postId: Union[UUID, str], req: PostUpdateRequest, user: Dict) -> PostResponse:
+    def updatePost(self, postId: str, req: PostUpdateRequest, user: Dict) -> PostResponse:
         """게시글 수정 로직"""
         post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(postId))
+                ResourceError(resource="게시글", id=postId)
             )
 
         # 권한 확인 (작성자 확인)
@@ -117,13 +128,13 @@ class PostController:
 
         return self._formatPost(updated_post)
 
-    def deletePost(self, postId: Union[UUID, str], user: Dict) -> Dict:
+    def deletePost(self, postId: str, user: Dict) -> Dict:
         """게시글 삭제 로직"""
         post = post_model.getPostById(postId)
         if not post:
             raise APIError(
                 ErrorCode.POST_NOT_FOUND, 
-                ResourceError(resource="게시글", id=str(postId))
+                ResourceError(resource="게시글", id=postId)
             )
 
         # 권한 확인
@@ -138,11 +149,11 @@ class PostController:
 
         return post
 
-    def togglePostLike(self, postId: Union[UUID, str], userId: Union[UUID, str]) -> Dict:
+    def togglePostLike(self, postId: str, userId: str) -> Dict:
         """게시글 좋아요 토글"""
         post = post_model.getPostById(postId)
         if not post:
-            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=str(postId)))
+            raise APIError(ErrorCode.POST_NOT_FOUND, ResourceError(resource="게시글", id=postId))
             
         likeCount = post_model.toggleLike(postId, userId)
         return {"likeCount": likeCount}

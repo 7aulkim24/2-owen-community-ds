@@ -1,8 +1,6 @@
-from typing import Dict
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from models.user_model import user_model
-
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 
@@ -14,8 +12,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
-
-def get_current_user(request: Request) -> Dict:
+def get_current_user(request: Request):
     """요청에 인증된 사용자 반환 (없으면 401, 검증 역할)"""
     user_id = getattr(request.state, "user_id", None)
     

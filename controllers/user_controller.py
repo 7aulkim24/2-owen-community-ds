@@ -1,24 +1,22 @@
 from typing import Dict, Union
-from uuid import UUID
 from fastapi import Request
-from models import user_model
+from models.user_model import user_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
-from schemas.user_schema import UserUpdateRequest, PasswordChangeRequest, UserResponse
-from schemas.error_schema import ResourceError, FieldError
+from schemas import UserUpdateRequest, PasswordChangeRequest, UserResponse, ResourceError, FieldError
 
 
 class UserController:
     """사용자 관련 비즈니스 로직"""
 
-    def getUserById(self, userId: Union[UUID, str]) -> UserResponse:
+    def getUserById(self, userId: str) -> UserResponse:
         """사용자 정보 조회"""
         user = user_model.getUserById(userId)
         if not user:
-            raise APIError(ErrorCode.USER_NOT_FOUND, ResourceError(resource="사용자", id=str(userId)))
+            raise APIError(ErrorCode.USER_NOT_FOUND, ResourceError(resource="사용자", id=userId))
         return UserResponse.model_validate(user)
 
-    def updateUser(self, userId: Union[UUID, str], req: UserUpdateRequest, currentUser: Dict) -> UserResponse:
+    def updateUser(self, userId: str, req: UserUpdateRequest, currentUser: Dict) -> UserResponse:
         """사용자 정보 수정"""
         # 본인 확인
         if str(userId) != str(currentUser["userId"]):
@@ -35,7 +33,7 @@ class UserController:
         updatedUser = user_model.updateUser(userId, updateData)
         return UserResponse.model_validate(updatedUser)
 
-    def changePassword(self, userId: Union[UUID, str], req: PasswordChangeRequest, currentUser: Dict) -> Dict:
+    def changePassword(self, userId: str, req: PasswordChangeRequest, currentUser: Dict) -> Dict:
         """비밀번호 변경"""
         if str(userId) != str(currentUser["userId"]):
             raise APIError(ErrorCode.FORBIDDEN)
@@ -43,7 +41,7 @@ class UserController:
         user_model.updateUser(userId, {"password": req.password})
         return {}
 
-    def deleteUser(self, userId: Union[UUID, str], currentUser: Dict, request: Request) -> Dict:
+    def deleteUser(self, userId: str, currentUser: Dict, request: Request) -> Dict:
         """회원 탈퇴"""
         if str(userId) != str(currentUser["userId"]):
             raise APIError(ErrorCode.FORBIDDEN)

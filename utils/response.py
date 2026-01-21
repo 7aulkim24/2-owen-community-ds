@@ -22,7 +22,12 @@ class StandardResponse:
 
     @staticmethod
     def error(code: ErrorCode, details: Any = None, message: Optional[str] = None) -> Dict:
-        """에러 응답 생성"""
+        """
+        에러 응답 생성
+        - code: FE에서 메시지 맵핑의 키로 사용
+        - message: 개발자용 디버깅 메시지 또는 폴백 메시지
+        - details: 구체적인 에러 정보 (필드 에러 등)
+        """
         return {
             "code": code.name,
             "message": message if message else code.default_message,

@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, EmailStr
 from typing import Optional
 from .base_schema import BaseSchema
 
@@ -14,7 +14,7 @@ class UserProfileImageResponse(BaseSchema):
 
 class UserResponse(BaseSchema):
     userId: str
-    email: str
+    email: EmailStr
     nickname: str
     profileImageUrl: Optional[str] = None
     createdAt: str
