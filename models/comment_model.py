@@ -109,6 +109,15 @@ class CommentModel:
         """전체 댓글 수 조회"""
         return len(self.commentsDb)
 
+    def updateUserNickname(self, userId: str, newNickname: str) -> int:
+        """사용자 닉네임 일괄 업데이트"""
+        count = 0
+        for comment in self.commentsDb.values():
+            if comment["userId"] == userId:
+                comment["userNickname"] = newNickname
+                count += 1
+        return count
+
 
 # Model 인스턴스 생성
 comment_model = CommentModel()

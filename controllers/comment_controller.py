@@ -14,9 +14,12 @@ class CommentController:
         """Comment 데이터를 API 응답 규격에 맞게 변환"""
         author = user_model.getUserById(comment["userId"])
         
+        # 최신 닉네임 우선 사용
+        nickname = author.get("nickname") if author else comment["userNickname"]
+        
         author_data = CommentAuthor(
             userId=comment["userId"],
-            nickname=comment["userNickname"],
+            nickname=nickname,
             profileImageUrl=author.get("profileImageUrl") if author else None
         )
 

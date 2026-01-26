@@ -20,10 +20,12 @@ class PostController:
         else:
             author = user_model.getUserById(author_id)
         
-        # author 정보가 없으면 (탈퇴 등) 기본값 처리
+        # author 정보가 있으면 (탈퇴 등) 최신 닉네임 사용, 없으면 post에 저장된 값 사용
+        nickname = author.get("nickname") if author else post["authorNickname"]
+        
         author_data = PostAuthor(
             userId=author_id,
-            nickname=post["authorNickname"],
+            nickname=nickname,
             profileImageUrl=author.get("profileImageUrl") if author else None
         )
 
@@ -78,7 +80,7 @@ class PostController:
             )
         )
 
-    def getPostById(self, postId: str) -> PostResponse:
+    def getPostById(self, postId: str, incHits: bool = True) -> PostResponse:
         """게시글 상세 조회 로직"""
         post = post_model.getPostById(postId)
         if not post:
@@ -87,10 +89,11 @@ class PostController:
                 ResourceError(resource="게시글", id=postId)
             )
 
-        # 조회수 증가
-        post_model.incrementViewCount(postId)
-        # 증가된 데이터 반영을 위해 다시 조회
-        post = post_model.getPostById(postId)
+        # 조회수 증가 (필요한 경우만)
+        if incHits:
+            post_model.incrementViewCount(postId)
+            # 증가된 데이터 반영을 위해 다시 조회
+            post = post_model.getPostById(postId)
 
         return self._formatPost(post)
 

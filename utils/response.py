@@ -13,10 +13,10 @@ class StandardResponse:
 
     @staticmethod
     def success(code: SuccessCode, data: Any = None) -> Dict:
-        """성공 응답 생성"""
+        """성공 응답 생성 (메시지는 FE에서 관리)"""
         return {
             "code": code.name,
-            "message": get_success_message(code),
+            "message": "",
             "data": data if data is not None else {}
         }
 
@@ -25,21 +25,22 @@ class StandardResponse:
         """
         에러 응답 생성
         - code: FE에서 메시지 맵핑의 키로 사용
-        - message: 개발자용 디버깅 메시지 또는 폴백 메시지
+        - message: 백엔드 내부 디버깅용 (FE에는 빈 문자열 전달)
         - details: 구체적인 에러 정보 (필드 에러 등)
         """
         return {
             "code": code.name,
-            "message": message if message else code.default_message,
+            "message": "",  # 책임 분리를 위해 메시지는 무조건 비워서 보냄
             "details": details if details is not None else {}
         }
 
     @staticmethod
     def validation_error(errors: List) -> Dict:
         """
-        Pydantic 검증 실패 응답 (설계도 60라인 규격 준수)
+        Pydantic 검증 실패 응답
         """
         field_details = {}
+        # ... (생략된 로직은 유지) ...
         for error in errors:
             field_name = str(error["loc"][-1])
             error_type = error["type"]
@@ -62,6 +63,6 @@ class StandardResponse:
                 
         return {
             "code": ErrorCode.INVALID_INPUT.name,
-            "message": ErrorCode.INVALID_INPUT.default_message,
+            "message": "",
             "details": field_details
         }

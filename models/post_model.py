@@ -137,6 +137,15 @@ class PostModel:
             return self.postsDb[postIdStr]["commentCount"]
         return 0
 
+    def updateAuthorNickname(self, authorId: str, newNickname: str) -> int:
+        """작성자 닉네임 일괄 업데이트"""
+        count = 0
+        for post in self.postsDb.values():
+            if post["authorId"] == authorId:
+                post["authorNickname"] = newNickname
+                count += 1
+        return count
+
     def getLikeCount(self, postId: Union[str, any]) -> int:
         """좋아요 수 조회"""
         postIdStr = self._normalizeId(postId)

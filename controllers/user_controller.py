@@ -1,6 +1,8 @@
 from typing import Dict, Union
 from fastapi import Request
 from models.user_model import user_model
+from models.post_model import post_model
+from models.comment_model import comment_model
 from utils.exceptions import APIError
 from utils.error_codes import ErrorCode
 from schemas import UserUpdateRequest, PasswordChangeRequest, UserResponse, ResourceError, FieldError
@@ -31,6 +33,12 @@ class UserController:
             "profileImageUrl": req.profileImageUrl
         }
         updatedUser = user_model.updateUser(userId, updateData)
+
+        # 닉네임이 변경된 경우 게시글 및 댓글의 닉네임 동기화
+        if req.nickname != currentUser["nickname"]:
+            post_model.updateAuthorNickname(userId, req.nickname)
+            comment_model.updateUserNickname(userId, req.nickname)
+
         return UserResponse.model_validate(updatedUser)
 
     def changePassword(self, userId: str, req: PasswordChangeRequest, currentUser: Dict) -> Dict:

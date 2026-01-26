@@ -25,13 +25,14 @@ async def get_posts(
 
 
 @router.get("/{postId}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
-async def get_post(postId: str):
+async def get_post(postId: str, incHits: bool = Query(True, description="조회수 증가 여부")):
     """
     게시글 상세 조회
     - 특정 게시글의 상세 정보 반환
+    - incHits=false 시 조회수가 증가하지 않음
     - 인증 불필요
     """
-    data = post_controller.getPostById(postId)
+    data = post_controller.getPostById(postId, incHits=incHits)
     return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 
