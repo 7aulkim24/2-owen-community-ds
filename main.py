@@ -1,18 +1,16 @@
 import logging
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 
-from utils.exceptions import APIError
 from utils.response import StandardResponse
-from utils.error_codes import ErrorCode, SuccessCode
+from utils.error_codes import SuccessCode
 from utils.auth_middleware import AuthMiddleware
 from utils.request_id_middleware import RequestIDMiddleware, request_id_ctx
+from utils.exception_handlers import register_exception_handlers
 
 # 로깅 필터: 로그에 request_id 추가
 class RequestIDFilter(logging.Filter):
@@ -68,30 +66,8 @@ app.add_middleware(CORSMiddleware,
                    allow_headers=["*"])
 app.add_middleware(RequestIDMiddleware)
 
-# 예외 핸들러
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.warning(f"Validation error: {exc.errors()}")
-    return JSONResponse(
-        status_code=422,
-        content=StandardResponse.validation_error(exc.errors())
-    )
-
-@app.exception_handler(APIError)
-async def api_exception_handler(request: Request, exc: APIError):
-    logger.info(f"API error: {exc.code.name}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=StandardResponse.error(exc.code, exc.details, exc.message)
-    )
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content=StandardResponse.error(ErrorCode.INTERNAL_SERVER_ERROR, {})
-    )
+# 예외 핸들러 등록
+register_exception_handlers(app)
 
 @app.get("/health")
 async def health_check():

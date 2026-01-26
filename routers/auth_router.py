@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Request, status, Query, UploadFile, File
+from fastapi import APIRouter, Request, status, Query, UploadFile, File, Depends
 from typing import Dict
 from utils.response import StandardResponse
 from utils.error_codes import SuccessCode
 from controllers.auth_controller import auth_controller
 from schemas import SignupRequest, LoginRequest, UserResponse, EmailAvailabilityResponse, NicknameAvailabilityResponse, UserProfileImageResponse, StandardResponse as StandardResponseSchema
 from utils.file_utils import save_upload_file
+from utils.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/v1/auth", tags=["인증"])
 
@@ -31,9 +32,9 @@ async def logout(request: Request):
 
 
 @router.get("/me", response_model=StandardResponseSchema[UserResponse], status_code=status.HTTP_200_OK)
-async def get_me(request: Request):
+async def get_me(user: Dict = Depends(get_current_user)):
     """내 정보 조회 (로그인 상태 검증)"""
-    data = auth_controller.getMe(request)
+    data = auth_controller.getMe(user)
     return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 

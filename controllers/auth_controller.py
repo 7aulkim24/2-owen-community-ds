@@ -36,16 +36,8 @@ class AuthController:
         request.session.clear()
         return {}
 
-    def getMe(self, request: Request) -> UserResponse:
+    def getMe(self, user: Dict) -> UserResponse:
         """내 정보 조회"""
-        user_id = getattr(request.state, "user_id", None)
-        if not user_id:
-            raise APIError(ErrorCode.UNAUTHORIZED)
-
-        user = user_model.getUserById(user_id)
-        if not user:
-            raise APIError(ErrorCode.UNAUTHORIZED)
-
         return UserResponse.model_validate(user)
 
     def checkEmailAvailability(self, email: str) -> Dict:

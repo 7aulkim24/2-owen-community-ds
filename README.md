@@ -60,6 +60,15 @@ uvicorn main:app --reload
 서버 실행 후 브라우저에서 아래 주소로 접속하여 Swagger UI를 확인할 수 있습니다.
 - `http://localhost:8000/docs`
 
+### 5. 프론트엔드 연동 (Live Server 활용)
+본 프로젝트는 프론트엔드와의 원활한 연동을 위해 **Live Server**를 통한 실행을 권장합니다.
+
+1.  **VS Code 익스텐션 설치**: `Live Server` 익스텐션이 설치되어 있는지 확인합니다.
+2.  **프론트엔드 폴더 열기**: `2-owen-community-fe` 폴더를 VS Code로 엽니다.
+3.  **Live Server 실행**: 하단 상태 표시줄의 `Go Live` 버튼을 클릭하거나, HTML 파일(예: `login.html`)에서 우클릭 후 `Open with Live Server`를 선택합니다.
+4.  **브라우저 확인**: 기본적으로 `http://localhost:5500` 주소에서 웹 페이지가 실행됩니다.
+    - **주의**: 백엔드 서버(port 8000)가 먼저 실행되고 있어야 정상적인 데이터 연동이 가능합니다.
+
 ## 주요 API 엔드포인트 (v1)
 
 ### 인증 및 사용자 (Auth/User)
