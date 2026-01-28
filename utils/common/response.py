@@ -5,7 +5,7 @@
 """
 
 from typing import Any, Dict, List, Optional
-from .error_codes import ErrorCode, SuccessCode, get_success_message
+from ..errors.error_codes import ErrorCode, SuccessCode, get_success_message
 
 
 class StandardResponse:

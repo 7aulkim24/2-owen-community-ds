@@ -1,8 +1,8 @@
 from typing import Dict
 from fastapi import Request
 from models.user_model import user_model
-from utils.exceptions import APIError
-from utils.error_codes import ErrorCode
+from utils.errors.exceptions import APIError
+from utils.errors.error_codes import ErrorCode
 from schemas import SignupRequest, LoginRequest, UserResponse, FieldError
 
 

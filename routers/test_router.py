@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
-from utils.test_utils import seed_database
-from utils.response import StandardResponse
-from utils.error_codes import SuccessCode
+from utils.test.test_utils import seed_database
+from utils.common.response import StandardResponse
+from utils.errors.error_codes import SuccessCode
 
 router = APIRouter(prefix="/v1/test", tags=["테스트 유틸리티"])
 

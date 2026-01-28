@@ -2,8 +2,8 @@ from typing import List, Dict, Union, Optional
 from models.post_model import post_model
 from models.comment_model import comment_model
 from models.user_model import user_model
-from utils.exceptions import APIError
-from utils.error_codes import ErrorCode
+from utils.errors.exceptions import APIError
+from utils.errors.error_codes import ErrorCode
 from schemas import PostCreateRequest, PostUpdateRequest, PostResponse, PostAuthor, PostFile, PaginatedData, PaginationMeta, ResourceError
 
 
@@ -32,7 +32,7 @@ class PostController:
         post_file = None
         if post.get("fileUrl"):
             post_file = PostFile(
-                fileId=post["postId"], # 임시로 postId 사용
+                fileId=post["postId"],
                 fileUrl=post["fileUrl"]
             )
 

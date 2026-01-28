@@ -12,12 +12,21 @@ class Settings(BaseSettings):
     # 쿠키 보안 설정 (환경별)
     cookie_secure: bool = False  # 로컬: False (HTTP에서도 작동), 배포: True (HTTPS만 작동)
     cookie_samesite: str = "lax"  # 로컬: "lax" (같은 도메인 내 cross-site 요청 허용), 배포: "strict"
+    session_cookie_name: str = "session"
 
     # 세션 설정
     session_timeout: int = 86400  # 24시간 (초 단위)
 
     # 보안 키
-    secret_key: str = "local-dev-secret-key"
+    secret_key: str
+
+    # DB 설정
+    db_host: str
+    db_port: int = 3306
+    db_user: str
+    db_password: str
+    db_name: str
+    db_pool_size: int = 5
 
     # 디버그 모드
     debug: bool = False

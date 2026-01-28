@@ -1,8 +1,8 @@
 import os
 import uuid
 from fastapi import UploadFile
-from utils.exceptions import APIError
-from utils.error_codes import ErrorCode
+from utils.errors.exceptions import APIError
+from utils.errors.error_codes import ErrorCode
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".JPG", ".JPEG"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB

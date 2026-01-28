@@ -3,14 +3,14 @@ import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 
-from utils.response import StandardResponse
-from utils.error_codes import SuccessCode
-from utils.auth_middleware import AuthMiddleware
-from utils.request_id_middleware import RequestIDMiddleware, request_id_ctx
-from utils.exception_handlers import register_exception_handlers
+from utils.common.response import StandardResponse
+from utils.errors.error_codes import SuccessCode
+from utils.middleware.auth_middleware import AuthMiddleware
+from utils.middleware.db_session_middleware import DBSessionMiddleware
+from utils.middleware.request_id_middleware import RequestIDMiddleware, request_id_ctx
+from utils.errors.exception_handlers import register_exception_handlers
 
 # 로깅 필터: 로그에 request_id 추가
 class RequestIDFilter(logging.Filter):
@@ -49,11 +49,7 @@ app.mount("/public", StaticFiles(directory=UPLOAD_DIR), name="public")
 
 # 미들웨어 등록 (LIFO 순서로 실행됨: RequestID -> CORS -> Session -> Auth -> App)
 app.add_middleware(AuthMiddleware)
-app.add_middleware(SessionMiddleware, 
-                   secret_key=settings.secret_key,
-                   https_only=settings.cookie_secure,
-                   same_site=settings.cookie_samesite,
-                   max_age=settings.session_timeout)
+app.add_middleware(DBSessionMiddleware)
 app.add_middleware(CORSMiddleware,
                    allow_origins=[
                        "http://localhost:5500", 

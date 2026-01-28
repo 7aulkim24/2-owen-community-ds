@@ -27,6 +27,7 @@ dependencies = [
     "pytest>=8.0.0",
     "python-ulid==3.0.0",
     "bcrypt==5.0.0",
+    "mysql-connector-python==9.2.0",
 ]
 
 [tool.setuptools.packages.find]

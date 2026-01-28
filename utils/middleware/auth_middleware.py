@@ -1,8 +1,8 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from models.user_model import user_model
-from utils.exceptions import APIError
-from utils.error_codes import ErrorCode
+from utils.errors.exceptions import APIError
+from utils.errors.error_codes import ErrorCode
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

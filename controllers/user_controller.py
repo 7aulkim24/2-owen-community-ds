@@ -3,8 +3,8 @@ from fastapi import Request
 from models.user_model import user_model
 from models.post_model import post_model
 from models.comment_model import comment_model
-from utils.exceptions import APIError
-from utils.error_codes import ErrorCode
+from utils.errors.exceptions import APIError
+from utils.errors.error_codes import ErrorCode
 from schemas import UserUpdateRequest, PasswordChangeRequest, UserResponse, ResourceError, FieldError
 
 

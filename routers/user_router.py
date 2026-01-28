@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status, Request, UploadFile, File
 from typing import Dict
-from utils.response import StandardResponse
-from utils.error_codes import SuccessCode
+from utils.common.response import StandardResponse
+from utils.errors.error_codes import SuccessCode
 from controllers.user_controller import user_controller
 from schemas import UserResponse, UserUpdateRequest, PasswordChangeRequest, UserProfileImageResponse, StandardResponse as StandardResponseSchema
-from utils.auth_middleware import get_current_user
-from utils.file_utils import save_upload_file
+from utils.middleware.auth_middleware import get_current_user
+from utils.common.file_utils import save_upload_file
 
 router = APIRouter(prefix="/v1/users", tags=["사용자"])
 

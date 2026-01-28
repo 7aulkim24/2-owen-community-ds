@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from typing import Dict, List, Optional
-from utils.response import StandardResponse
-from utils.error_codes import SuccessCode
+from utils.common.response import StandardResponse
+from utils.errors.error_codes import SuccessCode
 from controllers.comment_controller import comment_controller
 from schemas import CommentCreateRequest, CommentUpdateRequest, CommentResponse, StandardResponse as StandardResponseSchema
-from utils.auth_middleware import get_current_user
+from utils.middleware.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/v1/posts", tags=["댓글"])
 

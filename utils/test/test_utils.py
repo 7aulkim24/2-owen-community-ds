@@ -1,6 +1,7 @@
 from models.user_model import user_model
 from models.post_model import post_model
 from models.comment_model import comment_model
+from utils.database.db import execute
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,6 +11,7 @@ def seed_database():
     logger.info("Seeding database...")
     
     # 1. 모든 저장소 초기화
+    execute("DELETE FROM sessions")
     user_model.clear()
     post_model.clear()
     comment_model.clear()

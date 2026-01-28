@@ -7,20 +7,16 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../2-owe
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from utils.id_utils import generate_id
+from utils.common.id_utils import generate_id
 from models.user_model import user_model
 from models.post_model import post_model
 from models.comment_model import comment_model
+from utils.test.test_utils import seed_database
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown():
-    # 데이터베이스 초기화 (최적화된 매핑 포함)
-    user_model.usersDb = {}
-    user_model.emailMap = {}
-    user_model.nicknameMap = {}
-    post_model.postsDb = {}
-    post_model.likesDb = {}
-    comment_model.commentsDb = {}
+    # 데이터베이스 초기화
+    seed_database()
     yield
 
 # --- Auth API Tests ---

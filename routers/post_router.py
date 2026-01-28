@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status, Query, UploadFile, File
 from typing import Dict, List, Optional
-from utils.response import StandardResponse
-from utils.error_codes import SuccessCode
+from utils.common.response import StandardResponse
+from utils.errors.error_codes import SuccessCode
 from controllers.post_controller import post_controller
 from schemas import PostCreateRequest, PostUpdateRequest, PostResponse, PostImageUploadResponse, StandardResponse as StandardResponseSchema, PaginatedResponse as PaginatedResponseSchema
-from utils.auth_middleware import get_current_user
-from utils.file_utils import save_upload_file
+from utils.middleware.auth_middleware import get_current_user
+from utils.common.file_utils import save_upload_file
 
 router = APIRouter(prefix="/v1/posts", tags=["게시글"])
 

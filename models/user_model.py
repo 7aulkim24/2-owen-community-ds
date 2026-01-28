@@ -1,40 +1,49 @@
 from typing import Dict, Optional, List, Union
-from datetime import datetime
 import bcrypt
-from utils.id_utils import generate_id
+from utils.common.id_utils import generate_id
+from utils.database.db import fetch_one, fetch_all, execute
 
 
 class UserModel:
     """사용자 데이터 관리 Model"""
 
-    def __init__(self):
-        # 메모리 기반 사용자 저장소 (Key: userId)
-        self.usersDb: Dict[str, Dict] = {}
-        # 빠른 조회를 위한 매핑 (O(1))
-        self.emailMap: Dict[str, str] = {}  # {email: userId}
-        self.nicknameMap: Dict[str, str] = {}  # {nickname: userId}
-
     def _normalizeId(self, idVal: Union[str, any]) -> str:
         """ID 정규화 (문자열로 변환)"""
         return str(idVal)
 
+    def _format_datetime(self, value) -> Optional[str]:
+        if not value:
+            return None
+        return value.isoformat()
+
+    def _row_to_user(self, row: Optional[Dict]) -> Optional[Dict]:
+        if not row:
+            return None
+        return {
+            "userId": row["user_id"],
+            "email": row["email"],
+            "password": row["password"],
+            "nickname": row["nickname"],
+            "profileImageUrl": row.get("profile_image_url"),
+            "createdAt": self._format_datetime(row.get("created_at")),
+            "updatedAt": self._format_datetime(row.get("updated_at")),
+        }
+
     def hashPassword(self, password: str) -> str:
         """비밀번호 해싱 (bcrypt 직접 사용)"""
         salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
     def verifyPassword(self, plainPassword: str, hashedPassword: str) -> bool:
         """비밀번호 검증 (bcrypt 직접 사용)"""
         try:
-            return bcrypt.checkpw(plainPassword.encode('utf-8'), hashedPassword.encode('utf-8'))
+            return bcrypt.checkpw(plainPassword.encode("utf-8"), hashedPassword.encode("utf-8"))
         except Exception:
             return False
 
     def clear(self):
         """저장소 초기화 (테스트용)"""
-        self.usersDb.clear()
-        self.emailMap.clear()
-        self.nicknameMap.clear()
+        execute("DELETE FROM users")
 
     def getNextUserId(self) -> str:
         """다음 사용자 ID 생성 (ULID)"""
@@ -45,95 +54,108 @@ class UserModel:
         userId = self.getNextUserId()
         hashedPassword = self.hashPassword(password)
 
-        userData = {
-            "userId": userId,
-            "email": email,
-            "password": hashedPassword,
-            "nickname": nickname,
-            "profileImageUrl": profileImageUrl,
-            "createdAt": datetime.now().isoformat(),
-            "updatedAt": None
-        }
+        execute(
+            """
+            INSERT INTO users (user_id, email, password, nickname, profile_image_url, created_at)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+            """,
+            (userId, email, hashedPassword, nickname, profileImageUrl),
+        )
 
-        self.usersDb[userId] = userData
-        self.emailMap[email] = userId
-        self.nicknameMap[nickname] = userId
-        return userData.copy()
+        return self.getUserById(userId)
 
     def getUserById(self, userId: Union[str, any]) -> Optional[Dict]:
         """ID로 사용자 조회"""
         userIdStr = self._normalizeId(userId)
-        return self.usersDb.get(userIdStr)
+        row = fetch_one(
+            """
+            SELECT user_id, email, password, nickname, profile_image_url, created_at, updated_at
+            FROM users
+            WHERE user_id = %s AND deleted_at IS NULL
+            """,
+            (userIdStr,),
+        )
+        return self._row_to_user(row)
 
     def getUserByEmail(self, email: str) -> Optional[Dict]:
-        """이메일로 사용자 조회 (O(1))"""
-        userId = self.emailMap.get(email)
-        if userId:
-            return self.usersDb.get(userId)
-        return None
+        """이메일로 사용자 조회"""
+        row = fetch_one(
+            """
+            SELECT user_id, email, password, nickname, profile_image_url, created_at, updated_at
+            FROM users
+            WHERE email = %s AND deleted_at IS NULL
+            """,
+            (email,),
+        )
+        return self._row_to_user(row)
 
     def emailExists(self, email: str) -> bool:
-        """이메일 중복 체크 (O(1))"""
-        return email in self.emailMap
+        """이메일 중복 체크"""
+        row = fetch_one(
+            "SELECT 1 FROM users WHERE email = %s AND deleted_at IS NULL",
+            (email,),
+        )
+        return row is not None
 
     def nicknameExists(self, nickname: str) -> bool:
-        """닉네임 중복 체크 (O(1))"""
-        return nickname in self.nicknameMap
+        """닉네임 중복 체크"""
+        row = fetch_one(
+            "SELECT 1 FROM users WHERE nickname = %s AND deleted_at IS NULL",
+            (nickname,),
+        )
+        return row is not None
 
     def updateUser(self, userId: Union[str, any], updateData: Dict) -> Optional[Dict]:
         """사용자 정보 수정"""
         userIdStr = self._normalizeId(userId)
-        if userIdStr not in self.usersDb:
-            return None
+        fields = []
+        params = []
 
-        user = self.usersDb[userIdStr]
-        
-        # 닉네임 변경 시 매핑 업데이트
-        if "nickname" in updateData and updateData["nickname"] != user["nickname"]:
-            oldNickname = user["nickname"]
-            newNickname = updateData["nickname"]
-            if oldNickname in self.nicknameMap:
-                del self.nicknameMap[oldNickname]
-            self.nicknameMap[newNickname] = userIdStr
-            user["nickname"] = newNickname
+        if "nickname" in updateData:
+            fields.append("nickname = %s")
+            params.append(updateData["nickname"])
 
-        # 이메일 변경 시 매핑 업데이트 (현재는 지원하지 않으나 확장성 위해)
-        if "email" in updateData and updateData["email"] != user["email"]:
-            oldEmail = user["email"]
-            newEmail = updateData["email"]
-            if oldEmail in self.emailMap:
-                del self.emailMap[oldEmail]
-            self.emailMap[newEmail] = userIdStr
-            user["email"] = newEmail
+        if "email" in updateData:
+            fields.append("email = %s")
+            params.append(updateData["email"])
 
-        # 비밀번호 변경 시 해싱 적용
         if "password" in updateData:
-            user["password"] = self.hashPassword(updateData["password"])
+            fields.append("password = %s")
+            params.append(self.hashPassword(updateData["password"]))
 
         if "profileImageUrl" in updateData:
-            user["profileImageUrl"] = updateData["profileImageUrl"]
+            fields.append("profile_image_url = %s")
+            params.append(updateData["profileImageUrl"])
 
-        user["updatedAt"] = datetime.now().isoformat()
-        return user.copy()
+        if fields:
+            fields.append("updated_at = NOW()")
+            params.append(userIdStr)
+            execute(
+                f"UPDATE users SET {', '.join(fields)} WHERE user_id = %s AND deleted_at IS NULL",
+                params,
+            )
+
+        return self.getUserById(userIdStr)
 
     def deleteUser(self, userId: Union[str, any]) -> bool:
         """사용자 삭제"""
         userIdStr = self._normalizeId(userId)
-        if userIdStr in self.usersDb:
-            user = self.usersDb[userIdStr]
-            # 매핑에서도 삭제
-            if user["email"] in self.emailMap:
-                del self.emailMap[user["email"]]
-            if user["nickname"] in self.nicknameMap:
-                del self.nicknameMap[user["nickname"]]
-            
-            del self.usersDb[userIdStr]
-            return True
-        return False
+        affected = execute(
+            "UPDATE users SET deleted_at = NOW() WHERE user_id = %s AND deleted_at IS NULL",
+            (userIdStr,),
+        )
+        return affected > 0
 
     def getAllUsers(self) -> List[Dict]:
         """모든 사용자 조회"""
-        return list(self.usersDb.values())
+        rows = fetch_all(
+            """
+            SELECT user_id, email, password, nickname, profile_image_url, created_at, updated_at
+            FROM users
+            WHERE deleted_at IS NULL
+            """
+        )
+        return [self._row_to_user(row) for row in rows]
 
     def authenticateUser(self, email: str, password: str) -> Optional[Dict]:
         """사용자 인증"""
