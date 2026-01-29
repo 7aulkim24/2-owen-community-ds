@@ -1,0 +1,80 @@
+2026-01-29 11:28:18,045 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:28:52,060 - [f288f02607173fe0] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:28:52,060 - [f288f02607173fe0] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 0.56ms
+2026-01-29 11:28:52,062 - [33df41ba66218c57] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:28:52,348 - [33df41ba66218c57] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 286.16ms
+2026-01-29 11:29:29,173 - [a6600b67c4278074] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:29:29,175 - [a6600b67c4278074] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 2.39ms
+2026-01-29 11:29:29,181 - [96433e2c820c33d8] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:29:29,472 - [96433e2c820c33d8] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 291.10ms
+2026-01-29 11:30:43,805 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:31:01,821 - [55f5db95000ac182] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:31:02,091 - [55f5db95000ac182] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 271.14ms
+2026-01-29 11:36:30,910 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:36:53,083 - [6e14f09737000fb6] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:36:53,432 - [6e14f09737000fb6] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 348.61ms
+2026-01-29 11:37:37,555 - [571aa6a1235252cb] - access_logger - INFO - Request: OPTIONS /v1/posts/01KG3R533QTFAH3MWDHG8EPPRQ/likes - IP: 127.0.0.1
+2026-01-29 11:37:37,556 - [571aa6a1235252cb] - access_logger - INFO - Response: OPTIONS /v1/posts/01KG3R533QTFAH3MWDHG8EPPRQ/likes - Status: 200 - Time: 0.85ms
+2026-01-29 11:37:37,563 - [774c3b81c63ab370] - access_logger - INFO - Request: POST /v1/posts/01KG3R533QTFAH3MWDHG8EPPRQ/likes - IP: 127.0.0.1
+2026-01-29 11:37:37,614 - [774c3b81c63ab370] - access_logger - INFO - Response: POST /v1/posts/01KG3R533QTFAH3MWDHG8EPPRQ/likes - Status: 201 - Time: 50.56ms
+2026-01-29 11:37:50,583 - [507699458f3c0e16] - access_logger - INFO - Request: OPTIONS /v1/auth/logout - IP: 127.0.0.1
+2026-01-29 11:37:50,584 - [507699458f3c0e16] - access_logger - INFO - Response: OPTIONS /v1/auth/logout - Status: 200 - Time: 1.09ms
+2026-01-29 11:37:50,587 - [48bf673f965071c8] - access_logger - INFO - Request: POST /v1/auth/logout - IP: 127.0.0.1
+2026-01-29 11:37:50,607 - [48bf673f965071c8] - access_logger - INFO - Response: POST /v1/auth/logout - Status: 200 - Time: 20.25ms
+2026-01-29 11:38:01,198 - [f0a0a1d47edda6c7] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:38:01,472 - [f0a0a1d47edda6c7] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 274.13ms
+2026-01-29 11:39:34,536 - [9dc792a06b90d929] - access_logger - INFO - Request: POST /v1/users/me/profile-image - IP: 127.0.0.1
+2026-01-29 11:39:34,562 - [9dc792a06b90d929] - access_logger - INFO - Response: POST /v1/users/me/profile-image - Status: 201 - Time: 26.33ms
+2026-01-29 11:50:22,283 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:51:03,864 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:54:45,273 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:55:01,337 - [c3c3f2df95edfe3f] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:55:01,338 - [c3c3f2df95edfe3f] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 1.03ms
+2026-01-29 11:55:01,340 - [d8597df142fde8dd] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:55:01,366 - [d8597df142fde8dd] - utils.errors.exception_handlers - INFO - API error: INVALID_CREDENTIALS | Status: 401 | Message: 인증 정보가 올바르지 않습니다.
+2026-01-29 11:55:01,367 - [d8597df142fde8dd] - access_logger - INFO - Response: POST /v1/auth/login - Status: 401 - Time: 26.29ms
+2026-01-29 11:55:05,960 - [9e1f47a73194e3c5] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:55:05,966 - [9e1f47a73194e3c5] - utils.errors.exception_handlers - INFO - API error: INVALID_CREDENTIALS | Status: 401 | Message: 인증 정보가 올바르지 않습니다.
+2026-01-29 11:55:05,966 - [9e1f47a73194e3c5] - access_logger - INFO - Response: POST /v1/auth/login - Status: 401 - Time: 6.86ms
+2026-01-29 11:57:17,988 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:57:20,934 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:57:24,820 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 11:59:35,790 - [63944babba08c53c] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:59:35,792 - [63944babba08c53c] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 1.83ms
+2026-01-29 11:59:35,794 - [dbfb3d349cc1f08c] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 11:59:36,068 - [dbfb3d349cc1f08c] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 274.05ms
+2026-01-29 11:59:55,701 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:00:21,315 - [e31917cec6189b4a] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 12:00:21,590 - [e31917cec6189b4a] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 275.34ms
+2026-01-29 12:05:15,385 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:05:19,963 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:06:54,700 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:07:13,908 - [df3b88f7425ad50d] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 12:07:13,909 - [df3b88f7425ad50d] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 0.55ms
+2026-01-29 12:07:13,911 - [ccbcea65a3e83867] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 12:07:14,195 - [ccbcea65a3e83867] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 283.74ms
+2026-01-29 12:29:03,947 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:29:18,412 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:31:42,220 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:31:48,956 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:34:12,061 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:35:11,510 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:35:30,114 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:35:36,265 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:35:42,545 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:35:58,428 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:36:01,366 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:36:20,777 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:36:24,534 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:36:41,847 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:36:58,603 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:37:12,741 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:40:09,914 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:40:29,270 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:45:29,845 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:45:53,183 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:47:29,491 - [N/A] - main - INFO - Test router included (Debug Mode: ON)
+2026-01-29 12:47:37,997 - [9d3fb4a0c7a2f612] - access_logger - INFO - Request: OPTIONS /v1/auth/login - IP: 127.0.0.1
+2026-01-29 12:47:37,998 - [9d3fb4a0c7a2f612] - access_logger - INFO - Response: OPTIONS /v1/auth/login - Status: 200 - Time: 0.80ms
+2026-01-29 12:47:38,002 - [8a834e2ccb5c5b81] - access_logger - INFO - Request: POST /v1/auth/login - IP: 127.0.0.1
+2026-01-29 12:47:38,309 - [8a834e2ccb5c5b81] - access_logger - INFO - Response: POST /v1/auth/login - Status: 200 - Time: 307.40ms

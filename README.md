@@ -62,6 +62,17 @@ MySQL 서버가 실행 중이어야 하며, 아래 순서로 테이블을 생성
 2.  **스키마 적용**: `db/schema.sql` 파일을 실행하여 테이블 및 인덱스를 생성합니다.
 3.  **초기 데이터 삽입 (선택)**: `db/seed.sql` 파일을 실행하여 관리자 계정 등 초기 데이터를 삽입합니다.
 
+### 2-1. 대량 더미 데이터 생성 (성능 테스트용)
+`db/generate_dummy_data.py` 스크립트를 사용하면 10만 건 수준의 더미 데이터를 생성할 수 있습니다.
+
+```bash
+python db/generate_dummy_data.py --users 10000 --posts 40000 --comments 50000 --batch-size 5000 --clear
+```
+
+### 2-2. 성능 분석 및 인덱스 최적화 가이드
+- `db/perf_analysis.sql`: 주요 조회 쿼리에 대한 EXPLAIN 템플릿
+- `db/index_optimizations.sql`: EXPLAIN/슬로우쿼리 결과 기반 인덱스 후보
+
 ### 3. 의존성 설치
 `pyproject.toml`에 정의된 패키지들을 설치합니다.
 ```bash

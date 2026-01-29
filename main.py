@@ -10,6 +10,7 @@ from utils.errors.error_codes import SuccessCode
 from utils.middleware.auth_middleware import AuthMiddleware
 from utils.middleware.db_session_middleware import DBSessionMiddleware
 from utils.middleware.request_id_middleware import RequestIDMiddleware, request_id_ctx
+from utils.middleware.access_log_middleware import AccessLogMiddleware
 from utils.errors.exception_handlers import register_exception_handlers
 
 # 로깅 필터: 로그에 request_id 추가
@@ -25,9 +26,15 @@ logging_handler.setFormatter(logging.Formatter(
     '%(asctime)s - [%(request_id)s] - %(name)s - %(levelname)s - %(message)s'
 ))
 
+file_handler = logging.FileHandler("backend.log", encoding="utf-8")
+file_handler.addFilter(RequestIDFilter())
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - [%(request_id)s] - %(name)s - %(levelname)s - %(message)s'
+))
+
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[logging_handler],
+    handlers=[logging_handler, file_handler],
     force=True
 )
 logger = logging.getLogger(__name__)
@@ -47,7 +54,7 @@ if not os.path.exists(UPLOAD_DIR):
 
 app.mount("/public", StaticFiles(directory=UPLOAD_DIR), name="public")
 
-# 미들웨어 등록 (LIFO 순서로 실행됨: RequestID -> CORS -> Session -> Auth -> App)
+# 미들웨어 등록 (LIFO 순서로 실행됨: RequestID -> AccessLog -> CORS -> Session -> Auth -> App)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(DBSessionMiddleware)
 app.add_middleware(CORSMiddleware,
@@ -60,6 +67,7 @@ app.add_middleware(CORSMiddleware,
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])
+app.add_middleware(AccessLogMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 # 예외 핸들러 등록
@@ -67,6 +75,7 @@ register_exception_handlers(app)
 
 @app.get("/health")
 async def health_check():
+    logger.info("Health check endpoint called")
     return StandardResponse.success(SuccessCode.SUCCESS, {"status": "healthy"})
 
 # 라우터 등록

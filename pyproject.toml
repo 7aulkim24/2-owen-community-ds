@@ -28,6 +28,7 @@ dependencies = [
     "python-ulid==3.0.0",
     "bcrypt==5.0.0",
     "mysql-connector-python==9.2.0",
+    "Faker",
 ]
 
 [tool.setuptools.packages.find]

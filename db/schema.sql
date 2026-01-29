@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS posts (
 
 CREATE INDEX idx_author_created ON posts(user_id, created_at DESC);
 CREATE INDEX idx_created ON posts(created_at DESC);
+CREATE INDEX idx_posts_deleted_created ON posts(deleted_at, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS comments (
     comment_id VARCHAR(26) PRIMARY KEY,
@@ -42,6 +43,8 @@ CREATE TABLE IF NOT EXISTS comments (
 
 CREATE INDEX idx_post_created ON comments(post_id, created_at ASC);
 CREATE INDEX idx_user ON comments(user_id);
+CREATE INDEX idx_comments_post_deleted_created ON comments(post_id, deleted_at, created_at DESC);
+CREATE INDEX idx_comments_user_deleted_created ON comments(user_id, deleted_at, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS post_likes (
     post_id VARCHAR(26) NOT NULL,

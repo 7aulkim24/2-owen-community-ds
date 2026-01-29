@@ -38,3 +38,6 @@ Thumbs.db
 # Public uploads
 public/image/post/*
 public/image/profile/*
+
+# Test
+test/
