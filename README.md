@@ -15,6 +15,7 @@ FastAPI 기반의 고성능 커뮤니티 백엔드 API입니다. 실무 수준�
 
 - **Framework**: FastAPI (v0.128.0)
 - **Validation**: Pydantic v2 (Strict Typing & DTO)
+- **Database**: MySQL
 - **Security**: bcrypt (Password Hashing), Starlette Session (Cookie-based)
 - **ID System**: ULID (python-ulid)
 - **Testing**: pytest 기반 API 통합 테스트 환경 구축
@@ -24,28 +25,44 @@ FastAPI 기반의 고성능 커뮤니티 백엔드 API입니다. 실무 수준�
 
 ```
 2-owen-community-be/
-├── main.py               # 앱 초기화, 미들웨어 및 전역 설정
+├── main.py               # 앱 초기화, 미들웨어 및 전역 로깅 설정
 ├── config.py             # 환경 설정 (Pydantic Settings 활용)
 ├── routers/              # API 엔드포인트 정의 (v1)
 ├── controllers/          # 비즈니스 로직 및 DTO 변환
-├── models/               # 데이터 접근 및 인메모리 데이터 관리
+├── models/               # 데이터 접근 및 MySQL DB 연동
 ├── schemas/              # Pydantic 기반 Request/Response DTO
+├── db/                   # SQL 스키마 및 초기 데이터 (schema.sql, seed.sql)
 ├── utils/                # 공통 유틸리티
-│   ├── auth_middleware.py # 세션 기반 인증 미들웨어
-│   ├── id_utils.py       # ULID 생성 및 검증
-│   ├── exceptions.py     # 표준 APIError 정의
-│   ├── response.py       # 규격화된 응답 포맷터 (StandardResponse)
-│   ├── error_codes.py    # 통합 에러/성공 코드 관리
-│   └── request_id_middleware.py # 요청 추적 시스템
+│   ├── common/           # 공통 응답 및 ID 유틸리티
+│   ├── database/         # MySQL 커넥션 풀 및 쿼리 실행기 (로깅 포함)
+│   ├── errors/           # 예외 처리기 및 에러 코드 정의
+│   ├── middleware/       # 인증, DB 세션, Request ID 미들웨어
+│   └── test/             # 테스트 지원 유틸리티
 └── public/               # 업로드된 이미지 저장소 (post, profile)
 ```
+
+## 운영 및 디버깅 (Logging)
+
+본 프로젝트는 실무 수준의 디버깅을 위해 **통합 로깅 시스템**이 구축되어 있습니다.
+
+- **Request ID 추적**: 모든 요청에 고유 ID가 부여되며, FE-BE-DB 로그가 이 ID를 통해 하나로 연결됩니다.
+- **DB 쿼리 로깅**: 쿼리 실패 시 실제 SQL 문과 파라미터가 `backend.log`에 기록됩니다.
+- **계층별 에러 식별**: 프론트엔드 콘솔에서 에러가 백엔드/DB에서 발생했는지, 네트워크 문제인지 즉시 식별 가능합니다.
+- **로그 저장**: `2-owen-community-be/backend.log` 파일 및 터미널 표준 출력으로 기록됩니다.
 
 ## 시작하기
 
 ### 1. 환경 설정
-`.env.example` 파일을 복사하여 `.env` 파일을 생성하고 필요한 설정을 입력합니다.
+`.env` 파일을 생성하고 필요한 설정을 입력합니다.
 
-### 2. 의존성 설치
+### 2. 데이터베이스 세팅
+MySQL 서버가 실행 중이어야 하며, 아래 순서로 테이블을 생성하고 초기 데이터를 삽입합니다.
+
+1.  **데이터베이스 생성**
+2.  **스키마 적용**: `db/schema.sql` 파일을 실행하여 테이블 및 인덱스를 생성합니다.
+3.  **초기 데이터 삽입 (선택)**: `db/seed.sql` 파일을 실행하여 관리자 계정 등 초기 데이터를 삽입합니다.
+
+### 3. 의존성 설치
 `pyproject.toml`에 정의된 패키지들을 설치합니다.
 ```bash
 pip install -e .
@@ -103,6 +120,3 @@ uvicorn main:app --reload
 - **Error Handling**: `APIError`와 전역 예외 핸들러를 통해 비즈니스 에러를 표준화된 포맷으로 클라이언트에 전달합니다.
 
 ---
-
-**[자체 신뢰도 평가]**
-**높음**: `main.py`, `pyproject.toml`, `routers/` 및 `utils/` 내의 실제 소스 코드를 직접 분석하여 최신 API 스펙과 기술 스택을 정확히 반영하였습니다.

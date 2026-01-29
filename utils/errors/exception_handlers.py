@@ -29,7 +29,7 @@ def _map_http_status_to_error_code(status_code: int) -> ErrorCode:
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.warning("Validation error: %s", exc.errors())
+    logger.warning("Validation error: %s | Body: %s", exc.errors(), getattr(request, "_json", "N/A"))
     return JSONResponse(
         status_code=422,
         content=StandardResponse.validation_error(exc.errors()),
@@ -37,7 +37,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 async def api_exception_handler(request: Request, exc: APIError):
-    logger.info("API error: %s", exc.code.name)
+    logger.info("API error: %s | Status: %s | Message: %s", exc.code.name, exc.status_code, exc.message)
     return JSONResponse(
         status_code=exc.status_code,
         content=StandardResponse.error(exc.code, exc.details, exc.message),
@@ -47,6 +47,7 @@ async def api_exception_handler(request: Request, exc: APIError):
 async def http_exception_handler(request: Request, exc: HTTPException):
     error_code = _map_http_status_to_error_code(exc.status_code)
     details = {"detail": exc.detail} if exc.detail else {}
+    logger.warning("HTTP exception: %s | Status: %s | Detail: %s", error_code.name, exc.status_code, exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content=StandardResponse.error(error_code, details),
@@ -54,7 +55,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 async def general_exception_handler(request: Request, exc: Exception):
-    logger.error("Unexpected error: %s", str(exc), exc_info=True)
+    logger.error("Unexpected error: %s | Path: %s | Method: %s", str(exc), request.url.path, request.method, exc_info=True)
     return JSONResponse(
         status_code=500,
         content=StandardResponse.error(ErrorCode.INTERNAL_SERVER_ERROR, {}),

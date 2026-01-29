@@ -32,6 +32,10 @@ def _execute(
             result = cursor.fetchall()
         conn.commit()
         return result
+    except Exception as e:
+        import logging
+        logging.getLogger("db").error(f"DB Error: {str(e)} | Query: {query} | Params: {params}")
+        raise e
     finally:
         cursor.close()
         # MySQL 커넥션 풀에서는 close() 호출 시 실제 연결이 닫히지 않고 풀에 반환됨
@@ -53,6 +57,10 @@ def execute(query: str, params: Optional[Iterable[Any]] = None) -> int:
         cursor.execute(query, params or ())
         conn.commit()
         return cursor.rowcount
+    except Exception as e:
+        import logging
+        logging.getLogger("db").error(f"DB Error: {str(e)} | Query: {query} | Params: {params}")
+        raise e
     finally:
         cursor.close()
         # MySQL 커넥션 풀에서는 close() 호출 시 실제 연결이 닫히지 않고 풀에 반환됨

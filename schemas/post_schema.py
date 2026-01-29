@@ -32,6 +32,7 @@ class PostResponse(BaseSchema):
     file: Optional[PostFile] = None
     createdAt: str
     updatedAt: Optional[str] = None
+    isLiked: Optional[bool] = None
 
 class PostImageUploadResponse(BaseSchema):
     postFileUrl: str

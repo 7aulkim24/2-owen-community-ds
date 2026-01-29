@@ -10,7 +10,12 @@ from schemas import PostCreateRequest, PostUpdateRequest, PostResponse, PostAuth
 class PostController:
     """게시글 관련 비즈니스 로직"""
 
-    def _formatPost(self, post: Dict, user_cache: Optional[Dict[str, Dict]] = None) -> PostResponse:
+    def _formatPost(
+        self,
+        post: Dict,
+        user_cache: Optional[Dict[str, Dict]] = None,
+        current_user_id: Optional[str] = None,
+    ) -> PostResponse:
         """Post 데이터를 API 응답 규격에 맞게 변환"""
         author_id = post["authorId"]
         
@@ -36,6 +41,10 @@ class PostController:
                 fileUrl=post["fileUrl"]
             )
 
+        is_liked = None
+        if current_user_id:
+            is_liked = post_model.isLikedByUser(post["postId"], current_user_id)
+
         return PostResponse(
             postId=post["postId"],
             title=post["title"],
@@ -47,6 +56,7 @@ class PostController:
             file=post_file,
             createdAt=post["createdAt"],
             updatedAt=post.get("updatedAt"),
+            isLiked=is_liked,
         )
 
     def getAllPosts(self, limit: int = 10, offset: int = 0) -> PaginatedData[List[PostResponse]]:
@@ -80,7 +90,12 @@ class PostController:
             )
         )
 
-    def getPostById(self, postId: str, incHits: bool = True) -> PostResponse:
+    def getPostById(
+        self,
+        postId: str,
+        incHits: bool = True,
+        current_user_id: Optional[str] = None,
+    ) -> PostResponse:
         """게시글 상세 조회 로직"""
         post = post_model.getPostById(postId)
         if not post:
@@ -95,7 +110,7 @@ class PostController:
             # 증가된 데이터 반영을 위해 다시 조회
             post = post_model.getPostById(postId)
 
-        return self._formatPost(post)
+        return self._formatPost(post, current_user_id=current_user_id)
 
     def createPost(self, req: PostCreateRequest, user: Dict) -> PostResponse:
         """게시글 생성 로직"""
@@ -107,7 +122,7 @@ class PostController:
             fileUrl=req.fileUrl
         )
 
-        return self._formatPost(post_data)
+        return self._formatPost(post_data, current_user_id=user["userId"])
 
     def updatePost(self, postId: str, req: PostUpdateRequest, user: Dict) -> PostResponse:
         """게시글 수정 로직"""
@@ -129,7 +144,7 @@ class PostController:
             fileUrl=req.fileUrl
         )
 
-        return self._formatPost(updated_post)
+        return self._formatPost(updated_post, current_user_id=user["userId"])
 
     def deletePost(self, postId: str, user: Dict) -> Dict:
         """게시글 삭제 로직"""

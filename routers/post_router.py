@@ -4,7 +4,7 @@ from utils.common.response import StandardResponse
 from utils.errors.error_codes import SuccessCode
 from controllers.post_controller import post_controller
 from schemas import PostCreateRequest, PostUpdateRequest, PostResponse, PostImageUploadResponse, StandardResponse as StandardResponseSchema, PaginatedResponse as PaginatedResponseSchema
-from utils.middleware.auth_middleware import get_current_user
+from utils.middleware.auth_middleware import get_current_user, get_optional_user
 from utils.common.file_utils import save_upload_file
 
 router = APIRouter(prefix="/v1/posts", tags=["게시글"])
@@ -25,14 +25,18 @@ async def get_posts(
 
 
 @router.get("/{postId}", response_model=StandardResponseSchema[PostResponse], status_code=status.HTTP_200_OK)
-async def get_post(postId: str, incHits: bool = Query(True, description="조회수 증가 여부")):
+async def get_post(
+    postId: str,
+    incHits: bool = Query(True, description="조회수 증가 여부"),
+    user: Optional[Dict] = Depends(get_optional_user),
+):
     """
     게시글 상세 조회
     - 특정 게시글의 상세 정보 반환
     - incHits=false 시 조회수가 증가하지 않음
     - 인증 불필요
     """
-    data = post_controller.getPostById(postId, incHits=incHits)
+    data = post_controller.getPostById(postId, incHits=incHits, current_user_id=(user or {}).get("userId"))
     return StandardResponse.success(SuccessCode.SUCCESS, data)
 
 

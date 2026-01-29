@@ -27,3 +27,18 @@ def get_current_user(request: Request):
         raise APIError(ErrorCode.UNAUTHORIZED)
         
     return user
+
+
+def get_optional_user(request: Request):
+    """요청에 인증된 사용자 반환 (없으면 None)"""
+    user_id = getattr(request.state, "user_id", None)
+    if not user_id:
+        return None
+
+    user = user_model.getUserById(user_id)
+    if not user:
+        # 사용자가 없는 경우 세션 클리어
+        request.session.clear()
+        return None
+
+    return user
